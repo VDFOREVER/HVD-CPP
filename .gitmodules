@@ -1,0 +1,20 @@
+[submodule "subprojects/cpr"]
+	path = subprojects/cpr
+	url = https://github.com/libcpr/cpr.git
+	branch = 1.11.0
+[submodule "subprojects/pugixml"]
+	path = subprojects/pugixml
+	url = https://github.com/zeux/pugixml.git
+	branch = 1.14
+[submodule "subprojects/json"]
+	path = subprojects/json
+	url = https://github.com/nlohmann/json.git
+	branch = 3.11.3
+[submodule "subprojects/sqlitecpp"]
+	path = subprojects/sqlitecpp
+	url = https://github.com/SRombauts/SQLiteCpp.git
+	branch = 3.3.2
+[submodule "subprojects/tgbot"]
+	path = subprojects/tgbot
+	url = https://github.com/reo7sp/tgbot-cpp.git
+	branch = 1.8
