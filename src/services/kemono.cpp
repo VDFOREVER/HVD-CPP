@@ -7,7 +7,7 @@ std::vector<PostData> Kemono::parse(const std::string& tag) {
         return {};
     }
 
-    std::string request = Utils::request(std::format("{}{}/user/{}", getURL(), tags[0], tags[1]));
+    std::string request = Utils::request(fmt::format("{}{}/user/{}", getURL(), tags[0], tags[1]));
     if (request.empty())
         return {};
 
@@ -28,7 +28,7 @@ std::vector<PostData> Kemono::parse(const std::string& tag) {
                 tmp.emplace_back(data);
             }
         }
-    } catch (const nlohmann::json::type_error& e) {
+    } catch (const std::exception& e) {
         LOG_ERROR("Type error: {}", e.what());
     }
 

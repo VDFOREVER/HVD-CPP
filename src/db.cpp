@@ -14,9 +14,9 @@ DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) 
 
 void DB::addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services) {
     try {
-        db.exec(std::format("INSERT OR IGNORE INTO User (id) VALUES ({});", id));
+        db.exec(fmt::format("INSERT OR IGNORE INTO User (id) VALUES ({});", id));
         for(const auto& service: services) {
-            db.exec(std::format("INSERT OR IGNORE INTO Site (user_id, name) VALUES ({}, '{}');", id, service->getService()));
+            db.exec(fmt::format("INSERT OR IGNORE INTO Site (user_id, name) VALUES ({}, '{}');", id, service->getService()));
         }
 
     } catch (const std::exception& e) {
@@ -33,7 +33,7 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
         if (query.executeStep()) {
             int site_id = query.getColumn(0).getInt();
 
-            db.exec(std::format("INSERT OR IGNORE INTO Tags (site_id, tag) VALUES ({}, '{}');", site_id, tag));
+            db.exec(fmt::format("INSERT OR IGNORE INTO Tags (site_id, tag) VALUES ({}, '{}');", site_id, tag));
 
             std::vector<std::string> posts;
             for (const auto& post : service->parse(tag)) {
@@ -60,7 +60,7 @@ void DB::addAntiTag(const std::string &site_name, const std::string &tag, std::i
         if (query.executeStep()) {
             int site_id = query.getColumn(0).getInt();
 
-            db.exec(std::format("INSERT OR IGNORE INTO AntiTags (site_id, antitag) VALUES ({}, '{}');", site_id, tag));
+            db.exec(fmt::format("INSERT OR IGNORE INTO AntiTags (site_id, antitag) VALUES ({}, '{}');", site_id, tag));
         } else {
             LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);
         }
@@ -78,7 +78,7 @@ void DB::rmTag(const std::string &site_name, const std::string &tag, std::int64_
         if (query.executeStep()) {
             int site_id = query.getColumn(0).getInt();
 
-            db.exec(std::format("DELETE FROM Tags WHERE site_id = {} AND tag = '{}';", site_id, tag));
+            db.exec(fmt::format("DELETE FROM Tags WHERE site_id = {} AND tag = '{}';", site_id, tag));
         } else {
             LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);
         }
@@ -96,7 +96,7 @@ void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::in
         if (query.executeStep()) {
             int site_id = query.getColumn(0).getInt();
 
-            db.exec(std::format("DELETE FROM AntiTags WHERE site_id = {} AND antitag = '{}';", site_id, tag));
+            db.exec(fmt::format("DELETE FROM AntiTags WHERE site_id = {} AND antitag = '{}';", site_id, tag));
         } else {
             LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);
         }
@@ -115,7 +115,7 @@ void DB::addHistory(const std::string &site_name, const std::vector<std::string>
             int site_id = query.getColumn(0).getInt();
 
             for (const auto &entry : data) {
-                db.exec(std::format("INSERT OR IGNORE INTO History (site_id, entry) VALUES ({}, '{}');", site_id, entry));
+                db.exec(fmt::format("INSERT OR IGNORE INTO History (site_id, entry) VALUES ({}, '{}');", site_id, entry));
             }
         } else {
             LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);

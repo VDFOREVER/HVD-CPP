@@ -10,7 +10,7 @@
 
 class Bot {
     public:
-        Bot(const std::string& token, DB& db, std::vector<std::shared_ptr<Service>>& services, std::string admin);
+        Bot(const std::string& token, DB& db, std::vector<std::shared_ptr<Service>>& services, const std::string& admin);
         void run();
         void parser();
 

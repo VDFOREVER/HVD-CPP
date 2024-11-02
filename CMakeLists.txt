@@ -16,5 +16,6 @@ add_subdirectory(subprojects/pugixml)
 add_subdirectory(subprojects/json)
 add_subdirectory(subprojects/sqlitecpp)
 add_subdirectory(subprojects/tgbot)
+add_subdirectory(subprojects/fmt)
 
-target_link_libraries(${PROJECT_NAME} cpr pugixml nlohmann_json SQLiteCpp TgBot ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} cpr pugixml nlohmann_json SQLiteCpp TgBot ${OPENSSL_LIBRARIES} fmt::fmt)

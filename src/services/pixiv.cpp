@@ -1,6 +1,8 @@
 #include <services/pixiv.hpp>
 
 std::vector<PostData> Pixiv::parse(const std::string& tag) {
+    LOG_INFO("{}", accessToken);
+
     if (accessToken.empty()) {
         LOG_ERROR("Access token is empty");
         return {};
@@ -37,7 +39,7 @@ std::vector<PostData> Pixiv::parse(const std::string& tag) {
             PostData data(content, tagv, id, getService());
             tmp.emplace_back(data);
         }
-    } catch (const nlohmann::json::type_error& e) {
+    } catch (const std::exception& e) {
         LOG_ERROR("Type error: {}", e.what());
     }
 
@@ -94,7 +96,7 @@ void Pixiv::UpdateTokens(const std::string& jsons) {
         json data = json::parse(jsons);
         accessToken = data.at("access_token").get<std::string>();
         refreshToken = data.at("refresh_token").get<std::string>();
-    } catch (const nlohmann::json::type_error& e) {
+    } catch (const std::exception& e) {
         LOG_ERROR("Type error: {}", e.what());
     }
 }

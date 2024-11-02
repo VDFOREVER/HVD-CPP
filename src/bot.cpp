@@ -1,6 +1,6 @@
 #include <bot.hpp>
 
-Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>& services, std::string admin) : bot(token), db(db), services(services), admin(admin) {
+Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>& services, const std::string& admin) : bot(token), db(db), services(services), admin(admin) {
     bot.getEvents().onCommand("help", [this, &db](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");
@@ -122,7 +122,7 @@ void Bot::sendImages(const std::vector<Send>& send, std::int64_t user_id, std::s
     for (const auto& photo : send) {
         LOG_INFO("Send: {}", photo.getPost());
         try {
-            std::string caption = std::format("[{}]({})", service->getService(), service->getPostURL(photo));
+            std::string caption = fmt::format("[{}]({})", service->getService(), service->getPostURL(photo));
             bot.getApi().sendPhoto(user_id, photo.getPost(), caption, nullptr, nullptr, "MarkdownV2");
         } catch (const std::exception& e) {
             LOG_WARN("Erroe send image: {}", e.what());

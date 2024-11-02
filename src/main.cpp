@@ -10,9 +10,9 @@
 
 int main() {
     const char* token = std::getenv("TOKEN");
-    const char* admin = std::getenv("ADMIN");
+    const char* adminEnv = std::getenv("ADMIN");
 
-    if (token == nullptr || admin == nullptr) {
+    if (token == nullptr || adminEnv == nullptr) {
         LOG_CRITICAL("ENV variable is NULL (TOKEN and/or ADMIN)");
         return 1;
     }
@@ -25,6 +25,7 @@ int main() {
     services.push_back(std::make_unique<Kemono>());
     services.push_back(std::make_unique<Pixiv>());
 
+    std::string admin(adminEnv);
     Bot bot(token, db, services, admin);
     
     signal(SIGINT, [](int s) {

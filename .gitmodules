@@ -18,3 +18,6 @@
 	path = subprojects/tgbot
 	url = https://github.com/reo7sp/tgbot-cpp.git
 	branch = 1.8
+[submodule "subprojects/fmt"]
+	path = subprojects/fmt
+	url = https://github.com/fmtlib/fmt.git
