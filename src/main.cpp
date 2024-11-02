@@ -13,7 +13,7 @@ int main() {
     const char* admin = std::getenv("ADMIN");
 
     if (token == nullptr || admin == nullptr) {
-        LOG_CRITICAL("ENV varable is NULL (TOKEN and/or ADMIN)");
+        LOG_CRITICAL("ENV variable is NULL (TOKEN and/or ADMIN)");
         return 1;
     }
 
