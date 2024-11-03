@@ -8,6 +8,7 @@
 #include <openssl/evp.h>
 #include <random>
 #include <stdexcept>
+#include <log.hpp>
 
 class Utils {
     public:
@@ -15,8 +16,13 @@ class Utils {
         static std::string request(const std::string& url, Args&&... args) {
             cpr::Response r = cpr::Get(cpr::Url{url}, std::forward<Args>(args)...);
             
-            if (r.status_code != 200)
+            if (r.status_code != 200) {
+                LOG_WARN("Request Error: {} / {}", r.status_code, url);
                 return "";
+            }
+
+            if (r.text.empty())
+                LOG_WARN("Request empty: {}", url);
                 
             return r.text;
         }
