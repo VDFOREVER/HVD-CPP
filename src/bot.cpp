@@ -164,14 +164,17 @@ void Bot::parser() {
                     continue;
 
                 for (const auto& user: data.second) {
-                    auto history = db.getHistoryForUserAndSite(user, service->getService());
-                    auto antitag = db.getAntiTagForUserAndSite(user, service->getService());
+                    std::string history = db.getHistoryForUserSiteAndTag(user, service->getService(), data.first);
+                    std::vector<std::string> antitag = db.getAntiTagForUserAndSite(user, service->getService());
                     std::vector<Send> send;
                     std::vector<std::string> newHistory;
 
                     for (const auto& post: posts) {
                         for (const auto& content : post.getContent()) {
-                            if (Utils::contains(newHistory, content) || Utils::contains(history, content) || Utils::contains(antitag, data.first))
+                            if (content == history)
+                                goto leave;
+
+                            if (Utils::contains(newHistory, content) || Utils::contains(antitag, data.first))
                                 continue;
 
                             Send sss(content, post.getID(), data.first);
@@ -180,7 +183,9 @@ void Bot::parser() {
                         }
                     }
                     sendImages(send, user, service);
-                    db.addHistory(service->getService(), newHistory, user);
+                    db.updateHistory(service->getService(), newHistory, user);
+
+                    leave:;
                 }
 
                 std::this_thread::sleep_for(std::chrono::seconds(1));

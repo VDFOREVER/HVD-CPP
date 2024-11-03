@@ -3,9 +3,8 @@
 DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) {
     try {
         db.exec("CREATE TABLE IF NOT EXISTS User (id INTEGER PRIMARY KEY);");
-        db.exec("CREATE TABLE IF NOT EXISTS Tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, tag TEXT, UNIQUE(user_id, site_name, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS Tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, tag TEXT, history TEXT, UNIQUE(user_id, site_name, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
         db.exec("CREATE TABLE IF NOT EXISTS AntiTags (antitag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, antitag TEXT, UNIQUE(user_id, site_name, antitag), FOREIGN KEY (user_id) REFERENCES User(id));");
-        db.exec("CREATE TABLE IF NOT EXISTS History (history_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, entry TEXT, UNIQUE(user_id, site_name, entry), FOREIGN KEY (user_id) REFERENCES User(id));");
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -23,17 +22,12 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
     try {
         std::string site_name = service->getService();
         
-        db.exec(fmt::format("INSERT OR IGNORE INTO Tags (user_id, site_name, tag) VALUES ({}, '{}', '{}');", user_id, site_name, tag));
+        std::string history = "";
+        auto sss = service->parse(tag);
+        if (!sss.empty())
+            history = service->parse(tag).at(0).getContent().at(0);
 
-        std::vector<std::string> posts;
-        for (const auto& post : service->parse(tag)) {
-            auto content = post.getContent();
-            std::copy(content.begin(), content.end(), std::back_inserter(posts));
-        }
-
-        if (!posts.empty())
-            addHistory(site_name, posts, user_id);
-        
+        db.exec(fmt::format("INSERT OR IGNORE INTO Tags (user_id, site_name, tag, history) VALUES ({}, '{}', '{}', '{}');", user_id, site_name, tag, history));
     } catch (const std::exception& e) {
         LOG_ERROR("Add Tag: {}", e.what());
     }
@@ -63,13 +57,15 @@ void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::in
     }
 }
 
-void DB::addHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id) {
+void DB::updateHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id) {
     try {
-        for (const auto &entry : data) {
-            db.exec(fmt::format("INSERT OR IGNORE INTO History (user_id, site_name, entry) VALUES ({}, '{}', '{}');", user_id, site_name, entry));
-        }
+        if (!data.empty())
+            return;
+
+        std::string history = data.at(0);
+        db.exec(fmt::format("UPDATE Tags SET history = '{}' WHERE user_id = {} AND site_name = '{}';", history, user_id, site_name));
     } catch (const std::exception& e) {
-        LOG_ERROR("Error adding history: {}", e.what());
+        LOG_ERROR("Error updating history: {}", e.what());
     }
 }
 
@@ -112,28 +108,30 @@ std::unordered_map<std::string, std::vector<std::int64_t>> DB::getUsersByTags(co
     return tagToUsers;
 }
 
-std::vector<std::string> DB::getHistoryForUserAndSite(std::int64_t user_id, const std::string& site_name) {
-    std::vector<std::string> history_entries;
-    
+std::string DB::getHistoryForUserSiteAndTag(std::int64_t user_id, const std::string& site_name, const std::string& tag) {
+    std::string history;
+
     try {
         SQLite::Statement query(db, 
-            "SELECT History.entry "
-            "FROM History "
-            "WHERE History.user_id = ? AND History.site_name = ?"
+            "SELECT history "
+            "FROM Tags "
+            "WHERE user_id = ? AND site_name = ? AND tag = ?"
         );
         
         query.bind(1, user_id);
         query.bind(2, site_name);
+        query.bind(3, tag);
         
-        while (query.executeStep()) {
-            history_entries.push_back(query.getColumn(0).getString());
+        if (query.executeStep()) {
+            history = query.getColumn(0).getString();
         }
     } catch (const std::exception& e) {
         LOG_ERROR("Error retrieving history: {}", e.what());
     }
     
-    return history_entries;
+    return history;
 }
+
 
 std::vector<std::string> DB::getAntiTagForUserAndSite(std::int64_t user_id, const std::string& site_name) {
     std::vector<std::string> antitag_entries;
