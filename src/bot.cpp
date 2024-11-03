@@ -163,7 +163,6 @@ void Bot::parser() {
                             if (Utils::contains(newHistory, content) || Utils::contains(history, content) || Utils::contains(antitag, data.first))
                                 continue;
 
-                            LOG_INFO("{}", content);
                             Send sss(content, post.getID(), data.first);
                             send.emplace_back(sss);
                             newHistory.push_back(content);

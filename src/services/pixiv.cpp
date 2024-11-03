@@ -1,8 +1,6 @@
 #include <services/pixiv.hpp>
 
 std::vector<PostData> Pixiv::parse(const std::string& tag) {
-    LOG_INFO("{}", accessToken);
-
     if (accessToken.empty()) {
         LOG_ERROR("Access token is empty");
         return {};
