@@ -11,18 +11,29 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
     });
 
     bot.getEvents().onCommand("adduser", [this, &db, &services, &admin](TgBot::Message::Ptr message) {
-        if (std::to_string(message->chat->id) != admin) {
-            bot.getApi().sendMessage(message->chat->id, "Not Permission");
-            return;
-        }
+        try {
+            if (std::to_string(message->chat->id) != admin) {
+                bot.getApi().sendMessage(message->chat->id, "Not Permission");
+                return;
+            }
 
-        if (db.userExist(message->chat->id)) {
-            bot.getApi().sendMessage(message->chat->id, "Exist user");
-            return;
-        }
+            std::vector<std::string> args = Utils::split(message->text, ' ');
+            if (args.size() < 2) {
+                bot.getApi().sendMessage(message->chat->id, "Erroe: /adduser {id}");
+                return;
+            }
 
-        db.addUser(message->chat->id, services);
-        bot.getApi().sendMessage(message->chat->id, "add user");
+            std::int64_t id = std::stoll(args[1]);
+            if (db.userExist(id)) {
+                bot.getApi().sendMessage(message->chat->id, "Exist user");
+                return;
+            }
+
+            db.addUser(id, services);
+            bot.getApi().sendMessage(message->chat->id, "add user");
+        } catch (const std::exception& e) {
+            bot.getApi().sendMessage(message->chat->id, fmt::format("Error: {}", e.what()));
+        }
     });
 
     bot.getEvents().onCommand("addtag", [this, &db, &services](TgBot::Message::Ptr message) {
