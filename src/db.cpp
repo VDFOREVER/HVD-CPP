@@ -3,10 +3,9 @@
 DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) {
     try {
         db.exec("CREATE TABLE IF NOT EXISTS User (id INTEGER PRIMARY KEY);");
-        db.exec("CREATE TABLE IF NOT EXISTS Site (site_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, UNIQUE(user_id, name), FOREIGN KEY (user_id) REFERENCES User(id));");
-        db.exec("CREATE TABLE IF NOT EXISTS Tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, site_id INTEGER, tag TEXT, UNIQUE(site_id, tag), FOREIGN KEY (site_id) REFERENCES Site(site_id));");
-        db.exec("CREATE TABLE IF NOT EXISTS AntiTags (antitag_id INTEGER PRIMARY KEY AUTOINCREMENT,site_id INTEGER, antitag TEXT, UNIQUE(site_id, antitag),FOREIGN KEY (site_id) REFERENCES Site(site_id));");
-        db.exec("CREATE TABLE IF NOT EXISTS History (history_id INTEGER PRIMARY KEY AUTOINCREMENT,site_id INTEGER, entry TEXT, UNIQUE(site_id, entry), FOREIGN KEY (site_id) REFERENCES Site(site_id));");
+        db.exec("CREATE TABLE IF NOT EXISTS Tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, tag TEXT, UNIQUE(user_id, site_name, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS AntiTags (antitag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, antitag TEXT, UNIQUE(user_id, site_name, antitag), FOREIGN KEY (user_id) REFERENCES User(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS History (history_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, entry TEXT, UNIQUE(user_id, site_name, entry), FOREIGN KEY (user_id) REFERENCES User(id));");
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -15,10 +14,6 @@ DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) 
 void DB::addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services) {
     try {
         db.exec(fmt::format("INSERT OR IGNORE INTO User (id) VALUES ({});", id));
-        for(const auto& service: services) {
-            db.exec(fmt::format("INSERT OR IGNORE INTO Site (user_id, name) VALUES ({}, '{}');", id, service->getService()));
-        }
-
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -26,26 +21,19 @@ void DB::addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& s
 
 void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::int64_t user_id) {
     try {
-        SQLite::Statement query(db, "SELECT site_id FROM Site WHERE user_id = ? AND name = ?");
-        query.bind(1, user_id);
-        query.bind(2, service->getService());
+        std::string site_name = service->getService();
+        
+        db.exec(fmt::format("INSERT OR IGNORE INTO Tags (user_id, site_name, tag) VALUES ({}, '{}', '{}');", user_id, site_name, tag));
 
-        if (query.executeStep()) {
-            int site_id = query.getColumn(0).getInt();
-
-            db.exec(fmt::format("INSERT OR IGNORE INTO Tags (site_id, tag) VALUES ({}, '{}');", site_id, tag));
-
-            std::vector<std::string> posts;
-            for (const auto& post : service->parse(tag)) {
-                auto content = post.getContent();
-                std::copy(content.begin(), content.end(), std::back_inserter(posts));
-            }
-
-            if (!posts.empty())
-                addHistory(service->getService(), posts, user_id);
-        } else {
-            LOG_ERROR("Site '{}' not found for user {}", service->getService(), user_id);
+        std::vector<std::string> posts;
+        for (const auto& post : service->parse(tag)) {
+            auto content = post.getContent();
+            std::copy(content.begin(), content.end(), std::back_inserter(posts));
         }
+
+        if (!posts.empty())
+            addHistory(site_name, posts, user_id);
+        
     } catch (const std::exception& e) {
         LOG_ERROR("Add Tag: {}", e.what());
     }
@@ -53,17 +41,7 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
 
 void DB::addAntiTag(const std::string &site_name, const std::string &tag, std::int64_t user_id) {
     try {
-        SQLite::Statement query(db, "SELECT site_id FROM Site WHERE user_id = ? AND name = ?");
-        query.bind(1, user_id);
-        query.bind(2, site_name);
-
-        if (query.executeStep()) {
-            int site_id = query.getColumn(0).getInt();
-
-            db.exec(fmt::format("INSERT OR IGNORE INTO AntiTags (site_id, antitag) VALUES ({}, '{}');", site_id, tag));
-        } else {
-            LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);
-        }
+        db.exec(fmt::format("INSERT OR IGNORE INTO AntiTags (user_id, site_name, antitag) VALUES ({}, '{}', '{}');", user_id, site_name, tag));
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -71,17 +49,7 @@ void DB::addAntiTag(const std::string &site_name, const std::string &tag, std::i
 
 void DB::rmTag(const std::string &site_name, const std::string &tag, std::int64_t user_id) {
     try {
-        SQLite::Statement query(db, "SELECT site_id FROM Site WHERE user_id = ? AND name = ?");
-        query.bind(1, user_id);
-        query.bind(2, site_name);
-
-        if (query.executeStep()) {
-            int site_id = query.getColumn(0).getInt();
-
-            db.exec(fmt::format("DELETE FROM Tags WHERE site_id = {} AND tag = '{}';", site_id, tag));
-        } else {
-            LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);
-        }
+        db.exec(fmt::format("DELETE FROM Tags WHERE user_id = {} AND site_name = '{}' AND tag = '{}';", user_id, site_name, tag));
     } catch (const std::exception& e) {
         LOG_ERROR("RmTag: {}", e.what());
     }
@@ -89,17 +57,7 @@ void DB::rmTag(const std::string &site_name, const std::string &tag, std::int64_
 
 void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::int64_t user_id) {
     try {
-        SQLite::Statement query(db, "SELECT site_id FROM Site WHERE user_id = ? AND name = ?");
-        query.bind(1, user_id);
-        query.bind(2, site_name);
-
-        if (query.executeStep()) {
-            int site_id = query.getColumn(0).getInt();
-
-            db.exec(fmt::format("DELETE FROM AntiTags WHERE site_id = {} AND antitag = '{}';", site_id, tag));
-        } else {
-            LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);
-        }
+        db.exec(fmt::format("DELETE FROM AntiTags WHERE user_id = {} AND site_name = '{}' AND antitag = '{}';", user_id, site_name, tag));
     } catch (const std::exception& e) {
         LOG_ERROR("RmAntiTag: {}", e.what());
     }
@@ -107,18 +65,8 @@ void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::in
 
 void DB::addHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id) {
     try {
-        SQLite::Statement query(db, "SELECT site_id FROM Site WHERE user_id = ? AND name = ?");
-        query.bind(1, user_id);
-        query.bind(2, site_name);
-
-        if (query.executeStep()) {
-            int site_id = query.getColumn(0).getInt();
-
-            for (const auto &entry : data) {
-                db.exec(fmt::format("INSERT OR IGNORE INTO History (site_id, entry) VALUES ({}, '{}');", site_id, entry));
-            }
-        } else {
-            LOG_ERROR("Site '{}' not found for user {}", site_name, user_id);
+        for (const auto &entry : data) {
+            db.exec(fmt::format("INSERT OR IGNORE INTO History (user_id, site_name, entry) VALUES ({}, '{}', '{}');", user_id, site_name, entry));
         }
     } catch (const std::exception& e) {
         LOG_ERROR("Error adding history: {}", e.what());
@@ -143,26 +91,13 @@ std::unordered_map<std::string, std::vector<std::int64_t>> DB::getUsersByTags(co
     std::unordered_map<std::string, std::vector<std::int64_t>> tagToUsers;
 
     try {
-        SQLite::Statement siteQuery(db,
-            "SELECT site_id FROM Site WHERE name = ?"
-        );
-        siteQuery.bind(1, site_name);
-
-        if (!siteQuery.executeStep()) {
-            LOG_ERROR("Site '{}' not found.", site_name);
-            return tagToUsers;
-        }
-
-        std::int64_t site_id = siteQuery.getColumn(0).getInt64();
-
         SQLite::Statement tagQuery(db,
             "SELECT Tags.tag, User.id "
             "FROM User "
-            "JOIN Site ON User.id = Site.user_id "
-            "JOIN Tags ON Site.site_id = Tags.site_id "
-            "WHERE Site.site_id = ?"
+            "JOIN Tags ON User.id = Tags.user_id "
+            "WHERE Tags.site_name = ?"
         );
-        tagQuery.bind(1, site_id);
+        tagQuery.bind(1, site_name);
 
         while (tagQuery.executeStep()) {
             std::string tag = tagQuery.getColumn(0).getText();
@@ -184,8 +119,7 @@ std::vector<std::string> DB::getHistoryForUserAndSite(std::int64_t user_id, cons
         SQLite::Statement query(db, 
             "SELECT History.entry "
             "FROM History "
-            "JOIN Site ON History.site_id = Site.site_id "
-            "WHERE Site.user_id = ? AND Site.name = ?;"
+            "WHERE History.user_id = ? AND History.site_name = ?"
         );
         
         query.bind(1, user_id);
@@ -195,7 +129,7 @@ std::vector<std::string> DB::getHistoryForUserAndSite(std::int64_t user_id, cons
             history_entries.push_back(query.getColumn(0).getString());
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error retrieving history: " << e.what() << std::endl;
+        LOG_ERROR("Error retrieving history: {}", e.what());
     }
     
     return history_entries;
@@ -208,8 +142,7 @@ std::vector<std::string> DB::getAntiTagForUserAndSite(std::int64_t user_id, cons
         SQLite::Statement query(db, 
             "SELECT AntiTags.antitag "
             "FROM AntiTags "
-            "JOIN Site ON AntiTags.site_id = Site.site_id "
-            "WHERE Site.user_id = ? AND Site.name = ?;"
+            "WHERE AntiTags.user_id = ? AND AntiTags.site_name = ?"
         );
         
         query.bind(1, user_id);
@@ -219,23 +152,24 @@ std::vector<std::string> DB::getAntiTagForUserAndSite(std::int64_t user_id, cons
             antitag_entries.push_back(query.getColumn(0).getString());
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error retrieving antitag: " << e.what() << std::endl;
+        LOG_ERROR("Error retrieving antitag: {}", e.what());
     }
     
     return antitag_entries;
 }
+
 std::string DB::getFormattedTagsAndAntiTags(std::int64_t user_id) {
     std::stringstream result;
     
     try {
-        SQLite::Statement siteQuery(db, "SELECT name FROM Site WHERE user_id = ?");
+        SQLite::Statement siteQuery(db, "SELECT DISTINCT site_name FROM Tags WHERE user_id = ?");
         siteQuery.bind(1, user_id);
 
         while (siteQuery.executeStep()) {
             std::string site_name = siteQuery.getColumn(0).getText();
 
             std::vector<std::string> tags;
-            SQLite::Statement tagQuery(db, "SELECT tag FROM Tags WHERE site_id = (SELECT site_id FROM Site WHERE user_id = ? AND name = ?)");
+            SQLite::Statement tagQuery(db, "SELECT tag FROM Tags WHERE user_id = ? AND site_name = ?");
             tagQuery.bind(1, user_id);
             tagQuery.bind(2, site_name);
             
@@ -244,7 +178,7 @@ std::string DB::getFormattedTagsAndAntiTags(std::int64_t user_id) {
             }
 
             std::vector<std::string> antiTags;
-            SQLite::Statement antiTagQuery(db, "SELECT antitag FROM AntiTags WHERE site_id = (SELECT site_id FROM Site WHERE user_id = ? AND name = ?)");
+            SQLite::Statement antiTagQuery(db, "SELECT antitag FROM AntiTags WHERE user_id = ? AND site_name = ?");
             antiTagQuery.bind(1, user_id);
             antiTagQuery.bind(2, site_name);
             
@@ -252,12 +186,12 @@ std::string DB::getFormattedTagsAndAntiTags(std::int64_t user_id) {
                 antiTags.push_back(antiTagQuery.getColumn(0).getText());
             }
 
-            result << "-----" << site_name << " Tag-----\n";
+            result << "-----" << site_name << " Tags-----\n";
             for (const auto &tag : tags) {
                 result << tag << "\n";
             }
 
-            result << "-----" << site_name << " Anti tag-----\n";
+            result << "-----" << site_name << " Anti-tags-----\n";
             for (const auto &antiTag : antiTags) {
                 result << antiTag << "\n";
             }
