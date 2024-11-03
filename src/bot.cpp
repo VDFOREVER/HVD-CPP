@@ -36,6 +36,33 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
         }
     });
 
+    bot.getEvents().onCommand("rmuser", [this, &db, &services, &admin](TgBot::Message::Ptr message) {
+        try {
+            if (std::to_string(message->chat->id) != admin) {
+                bot.getApi().sendMessage(message->chat->id, "Not Permission");
+                return;
+            }
+
+            std::vector<std::string> args = Utils::split(message->text, ' ');
+            if (args.size() < 2) {
+                bot.getApi().sendMessage(message->chat->id, "Erroe: /rmuser {id}");
+                return;
+            }
+
+            std::int64_t id = std::stoll(args[1]);
+            if (!db.userExist(id)) {
+                bot.getApi().sendMessage(message->chat->id, "Exist user");
+                return;
+            }
+
+            db.rmUser(id, services);
+            bot.getApi().sendMessage(message->chat->id, "rm user");
+        } catch (const std::exception& e) {
+            bot.getApi().sendMessage(message->chat->id, fmt::format("Error: {}", e.what()));
+        }
+    });
+
+
     bot.getEvents().onCommand("addtag", [this, &db, &services](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");

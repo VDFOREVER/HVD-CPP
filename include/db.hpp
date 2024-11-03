@@ -21,6 +21,7 @@ class DB {
         std::vector<std::string> getAntiTagForUserAndSite(std::int64_t user_id, const std::string& site_name);
         std::string getFormattedTagsAndAntiTags(std::int64_t user_id);
         void addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services);
+        void rmUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services);
 
     private:
         SQLite::Database db;

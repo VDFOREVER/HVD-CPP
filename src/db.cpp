@@ -18,6 +18,16 @@ void DB::addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& s
     }
 }
 
+void DB::rmUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services) {
+    try {       
+        db.exec(fmt::format("DELETE FROM Tags WHERE user_id = {};", id));
+        db.exec(fmt::format("DELETE FROM AntiTags WHERE user_id = {};", id));
+        db.exec(fmt::format("DELETE FROM User WHERE id = {};", id));
+    } catch (const std::exception& e) {
+        LOG_ERROR("Failed to remove user with id {}: {}", id, e.what());
+    }
+}
+
 void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::int64_t user_id) {
     try {
         std::string site_name = service->getService();
