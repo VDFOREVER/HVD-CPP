@@ -122,12 +122,13 @@ void Bot::run() {
 void Bot::sendImages(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service) {
     for (const auto& photo : send) {
         LOG_INFO("Send: {}", photo.getPost());
+
+        std::string caption = fmt::format("[{}]({})\n[original]({})", service->getService(), service->getPostURL(photo), photo.getPost());
         try {
-            std::string caption = fmt::format("[{}]({})", service->getService(), service->getPostURL(photo));
             bot.getApi().sendPhoto(user_id, photo.getPost(), caption, nullptr, nullptr, "MarkdownV2");
         } catch (const std::exception& e) {
             LOG_WARN("Erroe send image: {}", e.what());
-            bot.getApi().sendMessage(user_id, photo.getPost());
+            bot.getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, "MarkdownV2");
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(5));
