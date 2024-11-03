@@ -106,15 +106,16 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
 }
 
 void Bot::run() {
-    try {
-        bot.getApi().deleteWebhook();
+    bot.getApi().deleteWebhook();
 
-        TgBot::TgLongPoll longPoll(bot);
-        while (true) {
+    TgBot::TgLongPoll longPoll(bot);
+    while (true) {
+        try {
             longPoll.start();
+        } catch (const std::exception& e) {
+            LOG_ERROR("Bot: {}", e.what());
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
-    } catch (std::exception& e) {
-        LOG_ERROR("{}", e.what());
     }
 }
 

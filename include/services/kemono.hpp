@@ -17,7 +17,7 @@ class Kemono : public Service {
                 return BASE_URL;
             }
 
-            return std::format("https://kemono.su/{}/user/{}/post/{}", tags[0], tags[1],send.getID());
+            return fmt::format("https://kemono.su/{}/user/{}/post/{}", tags[0], tags[1],send.getID());
         };
         std::string getURL() override {return "https://kemono.su/api/v1/";};
 
