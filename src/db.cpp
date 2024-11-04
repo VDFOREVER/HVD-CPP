@@ -69,7 +69,7 @@ void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::in
 
 void DB::updateHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id) {
     try {
-        if (!data.empty())
+        if (data.empty())
             return;
 
         std::string history = data.at(0);
