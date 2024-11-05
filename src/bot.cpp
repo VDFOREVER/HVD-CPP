@@ -212,7 +212,7 @@ void Bot::parser() {
 
                     leave:
                         sendImages(send, user, service);
-                        db.updateHistory(service->getService(), newHistory, user);
+                        db.updateHistory(service->getService(), newHistory, user, data.first);
                 }
 
                 std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -35,7 +35,7 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
         std::string history = "";
         auto sss = service->parse(tag);
         if (!sss.empty())
-            history = service->parse(tag).at(0).getContent().at(0);
+            history = sss.at(0).getContent().at(0);
 
         db.exec(fmt::format("INSERT OR IGNORE INTO Tags (user_id, site_name, tag, history) VALUES ({}, '{}', '{}', '{}');", user_id, site_name, tag, history));
     } catch (const std::exception& e) {
@@ -67,13 +67,13 @@ void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::in
     }
 }
 
-void DB::updateHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id) {
+void DB::updateHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id, const std::string &tag) {
     try {
         if (data.empty())
             return;
 
         std::string history = data.at(0);
-        db.exec(fmt::format("UPDATE Tags SET history = '{}' WHERE user_id = {} AND site_name = '{}';", history, user_id, site_name));
+        db.exec(fmt::format("UPDATE Tags SET history = '{}' WHERE user_id = {} AND site_name = '{}' AND tag = '{}';", history, user_id, site_name, tag));
     } catch (const std::exception& e) {
         LOG_ERROR("Error updating history: {}", e.what());
     }
