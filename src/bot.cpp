@@ -157,15 +157,20 @@ void Bot::run() {
     }
 }
 
-void Bot::sendImages(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service) {
+void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service) {
     for (const auto& photo : send) {
         LOG_INFO("Send: {}", photo.getPost());
 
         std::string caption = fmt::format("[{}]({})\n[original]({})", service->getService(), service->getPostURL(photo), photo.getPost());
+        std::filesystem::path url = photo.getPost();
+
         try {
-            bot.getApi().sendPhoto(user_id, photo.getPost(), caption, nullptr, nullptr, "MarkdownV2");
+            if (url.extension() == ".mp4")
+                bot.getApi().sendVideo(user_id, url, false, 0, 0, 0, "", caption, nullptr, nullptr, "MarkdownV2");
+            else
+                bot.getApi().sendPhoto(user_id, url, caption, nullptr, nullptr, "MarkdownV2");
         } catch (const std::exception& e) {
-            LOG_WARN("Erroe send image: {}", e.what());
+            LOG_WARN("Erroe send: {}", e.what());
             bot.getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, "MarkdownV2");
         }
 
@@ -211,7 +216,7 @@ void Bot::parser() {
                     }
 
                     leave:
-                        sendImages(send, user, service);
+                        sendContent(send, user, service);
                         db.updateHistory(service->getService(), newHistory, user, data.first);
                 }
 

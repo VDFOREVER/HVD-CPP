@@ -7,6 +7,7 @@
 #include <tgbot/tgbot.h>
 #include <utils.hpp>
 #include <services/service.hpp>
+#include <filesystem>
 
 class Bot {
     public:
@@ -19,7 +20,7 @@ class Bot {
         DB& db;
         std::string admin;
         std::vector<std::shared_ptr<Service>>& services;
-        void sendImages(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service);
+        void sendContent(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service);
         const std::string helpMessage =
             "/help\n"
             "/addtag {service} {tag}\n"
