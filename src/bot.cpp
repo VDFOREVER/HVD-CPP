@@ -190,26 +190,27 @@ void Bot::parser() {
             service->refresh();
 
             auto repeatTags = db.getUsersByTags(service->getService());
-            for (const auto& data : repeatTags) {
-                std::vector<PostData> posts = service->parse(data.first);
+            for (const auto& [tag, users] : repeatTags) {
+                std::vector<PostData> posts = service->parse(tag);
                 if (posts.empty())
                     continue;
 
-                for (const auto& user: data.second) {
-                    std::string history = db.getHistoryForUserSiteAndTag(user, service->getService(), data.first);
+                for (const auto& user: users) {
+                    std::string history = db.getHistoryForUserSiteAndTag(user, service->getService(), tag);
                     std::vector<std::string> antitag = db.getAntiTagForUserAndSite(user, service->getService());
                     std::vector<Send> send;
                     std::vector<std::string> newHistory;
 
                     for (const auto& post: posts) {
+                        auto tags = post.getTags();
                         for (const auto& content : post.getContent()) {
                             if (content == history)
                                 goto leave;
 
-                            if (Utils::contains(newHistory, content) || Utils::contains(antitag, data.first))
+                            if (Utils::contains(newHistory, content) || Utils::contains(antitag, tags))
                                 continue;
 
-                            Send sss(content, post.getID(), data.first);
+                            Send sss(content, post.getID(), tag);
                             send.emplace_back(sss);
                             newHistory.push_back(content);
                         }
@@ -217,7 +218,7 @@ void Bot::parser() {
 
                     leave:
                         sendContent(send, user, service);
-                        db.updateHistory(service->getService(), newHistory, user, data.first);
+                        db.updateHistory(service->getService(), newHistory, user, tag);
                 }
 
                 std::this_thread::sleep_for(std::chrono::seconds(1));
