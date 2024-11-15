@@ -203,11 +203,14 @@ void Bot::parser() {
 
                     for (const auto& post: posts) {
                         auto tags = post.getTags();
+                        if (Utils::contains(antitag, tags))
+                            continue;
+
                         for (const auto& content : post.getContent()) {
                             if (content == history)
                                 goto leave;
 
-                            if (Utils::contains(newHistory, content) || Utils::contains(antitag, tags))
+                            if (Utils::contains(newHistory, content))
                                 continue;
 
                             Send sss(content, post.getID(), tag);
