@@ -12,7 +12,10 @@ DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) 
 
 void DB::addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services) {
     try {
-        db.exec(fmt::format("INSERT OR IGNORE INTO User (id) VALUES ({});", id));
+        SQLite::Statement query(db, "INSERT OR IGNORE INTO User (id) VALUES (?);");
+        query.bind(1, id);
+        query.exec();
+
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -20,9 +23,17 @@ void DB::addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& s
 
 void DB::rmUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services) {
     try {       
-        db.exec(fmt::format("DELETE FROM Tags WHERE user_id = {};", id));
-        db.exec(fmt::format("DELETE FROM AntiTags WHERE user_id = {};", id));
-        db.exec(fmt::format("DELETE FROM User WHERE id = {};", id));
+        SQLite::Statement tagsQuery(db, "DELETE FROM Tags WHERE user_id = ?;");
+        tagsQuery.bind(1, id);
+        tagsQuery.exec();
+
+        SQLite::Statement antiTagsQuery(db, "DELETE FROM AntiTags WHERE user_id = ?;");
+        antiTagsQuery.bind(1, id);
+        antiTagsQuery.exec();
+
+        SQLite::Statement userQuery(db, "DELETE FROM User WHERE id = ?;");
+        userQuery.bind(1, id);
+        userQuery.exec();
     } catch (const std::exception& e) {
         LOG_ERROR("Failed to remove user with id {}: {}", id, e.what());
     }
@@ -37,7 +48,12 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
         if (!sss.empty())
             history = sss.at(0).getContent().at(0);
 
-        db.exec(fmt::format("INSERT OR IGNORE INTO Tags (user_id, site_name, tag, history) VALUES ({}, '{}', '{}', '{}');", user_id, site_name, tag, history));
+        SQLite::Statement query(db, "INSERT OR IGNORE INTO Tags (user_id, site_name, tag, history) VALUES (?, ?, ?, ?);");
+        query.bind(1, user_id);
+        query.bind(2, site_name);
+        query.bind(3, tag);
+        query.bind(4, history);
+        query.exec();
     } catch (const std::exception& e) {
         LOG_ERROR("Add Tag: {}", e.what());
     }
@@ -45,7 +61,11 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
 
 void DB::addAntiTag(const std::string &site_name, const std::string &tag, std::int64_t user_id) {
     try {
-        db.exec(fmt::format("INSERT OR IGNORE INTO AntiTags (user_id, site_name, antitag) VALUES ({}, '{}', '{}');", user_id, site_name, tag));
+        SQLite::Statement query(db, "INSERT OR IGNORE INTO AntiTags (user_id, site_name, antitag) VALUES (?, ?, ?);");
+        query.bind(1, user_id);
+        query.bind(2, site_name);
+        query.bind(3, tag);
+        query.exec();
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -53,7 +73,11 @@ void DB::addAntiTag(const std::string &site_name, const std::string &tag, std::i
 
 void DB::rmTag(const std::string &site_name, const std::string &tag, std::int64_t user_id) {
     try {
-        db.exec(fmt::format("DELETE FROM Tags WHERE user_id = {} AND site_name = '{}' AND tag = '{}';", user_id, site_name, tag));
+        SQLite::Statement query(db, "DELETE FROM Tags WHERE user_id = ? AND site_name = ? AND tag = ?;");
+        query.bind(1, user_id);
+        query.bind(2, site_name);
+        query.bind(3, tag);
+        query.exec();
     } catch (const std::exception& e) {
         LOG_ERROR("RmTag: {}", e.what());
     }
@@ -61,7 +85,11 @@ void DB::rmTag(const std::string &site_name, const std::string &tag, std::int64_
 
 void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::int64_t user_id) {
     try {
-        db.exec(fmt::format("DELETE FROM AntiTags WHERE user_id = {} AND site_name = '{}' AND antitag = '{}';", user_id, site_name, tag));
+        SQLite::Statement query(db, "DELETE FROM AntiTags WHERE user_id = ? AND site_name = ? AND antitag = ?;");
+        query.bind(1, user_id);
+        query.bind(2, site_name);
+        query.bind(3, tag);
+        query.exec();
     } catch (const std::exception& e) {
         LOG_ERROR("RmAntiTag: {}", e.what());
     }
@@ -73,7 +101,12 @@ void DB::updateHistory(const std::string &site_name, const std::vector<std::stri
             return;
 
         std::string history = data.at(0);
-        db.exec(fmt::format("UPDATE Tags SET history = '{}' WHERE user_id = {} AND site_name = '{}' AND tag = '{}';", history, user_id, site_name, tag));
+        SQLite::Statement query(db, "UPDATE Tags SET history = ? WHERE user_id = ? AND site_name = ? AND tag = ?;");
+        query.bind(1, history);
+        query.bind(2, user_id);
+        query.bind(3, site_name);
+        query.bind(4, tag);
+        query.exec();
     } catch (const std::exception& e) {
         LOG_ERROR("Error updating history: {}", e.what());
     }
