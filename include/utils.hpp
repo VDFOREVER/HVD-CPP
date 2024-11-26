@@ -13,18 +13,18 @@
 class Utils {
     public:
         template<typename... Args>
-        static std::string request(const std::string& url, Args&&... args) {
+        static std::pair<std::string, long> request(const std::string& url, Args&&... args) {
             cpr::Response r = cpr::Get(cpr::Url{url}, std::forward<Args>(args)...);
             
             if (r.status_code != 200) {
                 LOG_WARN("Request Error: {} / {}", r.status_code, url);
-                return "";
+                return std::make_pair("", r.status_code);
             }
 
             if (r.text.empty())
                 LOG_WARN("Request empty: {}", url);
                 
-            return r.text;
+            return std::make_pair(r.text, r.status_code);
         }
 
         static std::vector<std::string> split(const std::string& str, char delimiter);

@@ -6,13 +6,20 @@ std::vector<PostData> Pixiv::parse(const std::string& tag) {
         return {};
     }
 
-    std::string request = Utils::request(getURL() + tag, cpr::Bearer{accessToken});
-    if (request.empty())
+    std::pair<std::string, long> request = Utils::request(getURL() + tag, cpr::Bearer{accessToken});
+
+    if (request.second == 400) {
+        LOG_WARN("force refresh token");
+        refresh();
+        request = Utils::request(getURL() + tag, cpr::Bearer{accessToken});
+    }
+
+    if (request.first.empty())
          return {};
 
     std::vector<PostData> tmp;
     try {
-        json data = json::parse(request);
+        json data = json::parse(request.first);
 
         for (const auto& illusts : data.at("illusts")) {
             std::string id = std::to_string(illusts.at("id").get<int>());

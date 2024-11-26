@@ -7,14 +7,14 @@ std::vector<PostData> Kemono::parse(const std::string& tag) {
         return {};
     }
 
-    std::string request = Utils::request(fmt::format("{}{}/user/{}", getURL(), tags[0], tags[1]));
-    if (request.empty())
+    std::pair<std::string, long> request = Utils::request(fmt::format("{}{}/user/{}", getURL(), tags[0], tags[1]));
+    if (request.first.empty())
         return {};
 
     std::vector<PostData> tmp;
 
     try {
-        json data = json::parse(request);
+        json data = json::parse(request.first);
 
         for (const auto& item : data) {
             std::string id = item.at("id");
