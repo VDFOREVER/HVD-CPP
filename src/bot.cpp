@@ -163,15 +163,20 @@ void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::
 
         std::string caption = fmt::format("[{}]({})\n[original]({})", service->getService(), service->getPostURL(photo), photo.getPost());
         std::filesystem::path url = photo.getPost();
+        static std::string mode = "MarkdownV2";
 
         try {
             if (url.extension() == ".mp4")
-                bot.getApi().sendVideo(user_id, url, false, 0, 0, 0, "", caption, nullptr, nullptr, "MarkdownV2");
+                bot.getApi().sendVideo(user_id, url, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
             else
-                bot.getApi().sendPhoto(user_id, url, caption, nullptr, nullptr, "MarkdownV2");
+                bot.getApi().sendPhoto(user_id, url, caption, nullptr, nullptr, mode);
         } catch (const std::exception& e) {
             LOG_WARN("Erroe send: {}", e.what());
-            bot.getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, "MarkdownV2");
+            try {
+                bot.getApi().sendDocument(user_id, TgBot::InputFile::fromFile(url, ""), "", caption, nullptr, nullptr, mode);
+            } catch (const std::exception& e) {
+                bot.getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, mode);
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(5));
