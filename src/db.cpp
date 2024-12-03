@@ -160,9 +160,9 @@ std::vector<std::string> DB::getHistory(std::int64_t user_id, const std::string&
     
     try {
         SQLite::Statement query(db, 
-            "SELECT History.entry "
+            "SELECT History.history "
             "FROM History "
-            "WHERE History.user_id = ? AND History.site_name = ? AND tag = ?"
+            "WHERE History.user_id = ? AND History.site_name = ?"
         );
 
         query.bind(1, user_id);
