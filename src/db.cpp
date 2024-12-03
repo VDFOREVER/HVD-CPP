@@ -50,7 +50,7 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
             std::copy(content.begin(), content.end(), std::back_inserter(posts));
         }
 
-        addHistory(site_name, posts, user_id, tag);
+        addHistory(site_name, posts, user_id);
 
         SQLite::Statement query(db, "INSERT OR IGNORE INTO Tags (user_id, site_name, tag) VALUES (?, ?, ?);");
         query.bind(1, user_id);
