@@ -105,7 +105,7 @@ void DB::addHistory(const std::string &site_name, const std::vector<std::string>
             if (history.empty())
                 return;
 
-            SQLite::Statement query(db, "INSERT OR IGNORE INTO History (user_id, site_name, tag) VALUES (?, ?, ?);");
+            SQLite::Statement query(db, "INSERT OR IGNORE INTO History (history, user_id, site_name, tag) VALUES (?, ?, ?, ?);");
             query.bind(1, history);
             query.bind(2, user_id);
             query.bind(3, site_name);
