@@ -3,7 +3,7 @@
 DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) {
     try {
         db.exec("CREATE TABLE IF NOT EXISTS User (id INTEGER PRIMARY KEY);");
-        db.exec("CREATE TABLE IF NOT EXISTS Tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, history TEXT, UNIQUE(user_id, site_name), FOREIGN KEY (user_id) REFERENCES User(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS Tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, tag TEXT, UNIQUE(user_id, site_name, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
         db.exec("CREATE TABLE IF NOT EXISTS AntiTags (antitag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, antitag TEXT, UNIQUE(user_id, site_name, antitag), FOREIGN KEY (user_id) REFERENCES User(id));");
         db.exec("CREATE TABLE IF NOT EXISTS History (history_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, tag TEXT, UNIQUE(user_id, site_name, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
     } catch (const std::exception& e) {
