@@ -14,7 +14,7 @@ class DB {
         void addAntiTag(const std::string &site_name, const std::string &tag, std::int64_t user_id);
         void rmTag(const std::string &site_name, const std::string &tag, std::int64_t user_id);
         void rmAntiTag(const std::string &site_name, const std::string &tag, std::int64_t user_id);
-        void addHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id, const std::string &tag);
+        void addHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id);
         bool userExist(std::int64_t user);
         std::unordered_map<std::string, std::vector<int64_t>> getUsersByTags(const std::string &site_name);        
         std::vector<std::string> getHistory(std::int64_t user_id, const std::string& site_name, const std::string& tag);

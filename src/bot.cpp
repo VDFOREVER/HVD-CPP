@@ -222,7 +222,7 @@ void Bot::parser() {
                     }
 
                     sendContent(send, user, service);
-                    db.addHistory(service->getService(), newHistory, user, tag);
+                    db.addHistory(service->getService(), newHistory, user);
                 }
 
                 std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -5,7 +5,7 @@ DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) 
         db.exec("CREATE TABLE IF NOT EXISTS User (id INTEGER PRIMARY KEY);");
         db.exec("CREATE TABLE IF NOT EXISTS Tags (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, tag TEXT, UNIQUE(user_id, site_name, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
         db.exec("CREATE TABLE IF NOT EXISTS AntiTags (antitag_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, antitag TEXT, UNIQUE(user_id, site_name, antitag), FOREIGN KEY (user_id) REFERENCES User(id));");
-        db.exec("CREATE TABLE IF NOT EXISTS History (history_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, tag TEXT, UNIQUE(user_id, site_name, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS History (history_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site_name TEXT, history TEXT, UNIQUE(user_id, site_name, history), FOREIGN KEY (user_id) REFERENCES User(id));");
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -99,17 +99,16 @@ void DB::rmAntiTag(const std::string &site_name, const std::string &tag, std::in
     }
 }
 
-void DB::addHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id, const std::string &tag) {
+void DB::addHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id) {
     for (const auto& history: data) {
         try {
             if (history.empty())
                 return;
 
-            SQLite::Statement query(db, "INSERT OR IGNORE INTO History (history, user_id, site_name, tag) VALUES (?, ?, ?, ?);");
+            SQLite::Statement query(db, "INSERT OR IGNORE INTO History (history, user_id, site_name) VALUES (?, ?, ?);");
             query.bind(1, history);
             query.bind(2, user_id);
             query.bind(3, site_name);
-            query.bind(4, tag);
             query.exec();
         } catch (const std::exception& e) {
             LOG_ERROR("Error adding history: {}", e.what());
