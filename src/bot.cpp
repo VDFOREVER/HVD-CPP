@@ -201,7 +201,7 @@ void Bot::parser() {
                     continue;
 
                 for (const auto& user: users) {
-                    std::string history = db.getHistoryForUserSiteAndTag(user, service->getService(), tag);
+                    std::vector<std::string> history = db.getHistory(user, service->getService(), tag);
                     std::vector<std::string> antitag = db.getAntiTagForUserAndSite(user, service->getService());
                     std::vector<Send> send;
                     std::vector<std::string> newHistory;
@@ -212,10 +212,7 @@ void Bot::parser() {
                             continue;
 
                         for (const auto& content : post.getContent()) {
-                            if (content == history)
-                                goto leave;
-
-                            if (Utils::contains(newHistory, content))
+                            if (Utils::contains(newHistory, content) || Utils::contains(history, content))
                                 continue;
 
                             Send sss(content, post.getID(), tag);
@@ -224,9 +221,8 @@ void Bot::parser() {
                         }
                     }
 
-                    leave:
-                        sendContent(send, user, service);
-                        db.updateHistory(service->getService(), newHistory, user, tag);
+                    sendContent(send, user, service);
+                    db.addHistory(service->getService(), newHistory, user, tag);
                 }
 
                 std::this_thread::sleep_for(std::chrono::seconds(1));
