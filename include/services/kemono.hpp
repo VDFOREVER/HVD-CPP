@@ -11,7 +11,7 @@ class Kemono : public Service {
         std::vector<PostData> parse(const std::string& tag) override;
         std::string getService() override {return "kemono";};
         std::string getPostURL(const Send& send) override {
-            std::vector<std::string> tags = Utils::split(send.getTag(), '/');
+        std::vector<std::string> tags = Utils::split(send.getTag(), '/');
             if (tags.size() < 2 || tags.size() > 2) {
                 LOG_WARN("Error split");
                 return BASE_URL;

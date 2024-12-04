@@ -85,3 +85,18 @@ std::string Utils::generate_urlsafe_token(std::size_t length) {
 
     return token;
 }
+
+std::string Utils::getMimeType(const std::filesystem::path& path) {
+    std::string mimeType = "application/octet-stream"; // default value
+    std::string ext = path.extension().string();
+
+    if (ext == ".mp4") {
+        mimeType = "video/mp4";
+    } else if (ext == ".png") {
+        mimeType = "image/png";
+    } else if (ext == ".jpg" || ext == ".jpeg") {
+        mimeType = "image/jpeg";
+    }
+
+    return mimeType;
+}

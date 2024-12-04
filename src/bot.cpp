@@ -159,21 +159,28 @@ void Bot::run() {
 
 void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service) {
     for (const auto& photo : send) {
-        LOG_INFO("Send: {}", photo.getPost());
-
-        std::string caption = fmt::format("[{}]({})\n[original]({})", service->getService(), service->getPostURL(photo), photo.getPost());
         std::filesystem::path url = photo.getPost();
-        static std::string mode = "MarkdownV2";
+        LOG_INFO("Send: {}", url.string());
 
+        std::string data = service->request(url).first; 
+
+        TgBot::InputFile::Ptr file = std::make_shared<TgBot::InputFile>();
+        file->data = data;
+        file->mimeType = Utils::getMimeType(url);
+        file->fileName = url.filename();
+
+        std::string caption = fmt::format("[{}]({})\n[original]({})", service->getService(), service->getPostURL(photo), url.string());
+        static std::string mode = "MarkdownV2";
+        
         try {
             if (url.extension() == ".mp4")
-                bot.getApi().sendVideo(user_id, url, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
+                bot.getApi().sendVideo(user_id, file, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
             else
-                bot.getApi().sendPhoto(user_id, url, caption, nullptr, nullptr, mode);
+                bot.getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
         } catch (const std::exception& e) {
-            LOG_WARN("Erroe send: {}", e.what());
+            LOG_WARN("Error send: {}", e.what());
             try {
-                bot.getApi().sendDocument(user_id, TgBot::InputFile::fromFile(url, ""), "", caption, nullptr, nullptr, mode);
+                bot.getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
             } catch (const std::exception& e) {
                 bot.getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, mode);
             }

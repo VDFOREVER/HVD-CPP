@@ -2,8 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <cpr/cpr.h>
-#include <cpr/cookies.h>
 #include <services/service.hpp>
 #include <openssl/evp.h>
 #include <random>
@@ -12,21 +10,6 @@
 
 class Utils {
     public:
-        template<typename... Args>
-        static std::pair<std::string, long> request(const std::string& url, Args&&... args) {
-            cpr::Response r = cpr::Get(cpr::Url{url}, std::forward<Args>(args)...);
-            
-            if (r.status_code != 200) {
-                LOG_WARN("Request Error: {} / {}", r.status_code, url);
-                return std::make_pair("", r.status_code);
-            }
-
-            if (r.text.empty())
-                LOG_WARN("Request empty: {}", url);
-                
-            return std::make_pair(r.text, r.status_code);
-        }
-
         static std::vector<std::string> split(const std::string& str, char delimiter);
         static std::shared_ptr<Service> findServiceByName(const std::vector<std::shared_ptr<Service>>& services, const std::string& serviceName);
         template <typename T>
@@ -44,4 +27,5 @@ class Utils {
         static std::vector<std::uint8_t> sha256(const std::string& input);
         static std::string urlsafe_b64encode(const std::vector<std::uint8_t>& hash);
         static std::string generate_urlsafe_token(std::size_t length);
+        static std::string getMimeType(const std::filesystem::path& path);
 };

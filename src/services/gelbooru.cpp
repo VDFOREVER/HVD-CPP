@@ -1,12 +1,12 @@
 #include <services/gelbooru.hpp>
 
 std::vector<PostData> Gelbooru::parse(const std::string& tag) {
-    std::pair<std::string, long>  request = Utils::request(getURL() + tag, cpr::Cookie("fringeBenefits", "yup"));
-    if (request.first.empty())
+    std::string recData = request(getURL() + tag).first;
+    if (recData.empty())
          return {};
 
     pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_string(request.first.c_str());
+    pugi::xml_parse_result result = doc.load_string(recData.c_str());
     if (!result)
         return {};
     
