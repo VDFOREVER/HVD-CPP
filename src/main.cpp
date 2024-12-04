@@ -9,10 +9,10 @@
 #include <bot.hpp>
 
 int main() {
-    const char* token = std::getenv("TOKEN");
-    const char* adminEnv = std::getenv("ADMIN");
+    std::string token(std::getenv("TOKEN"));
+    std::string admin(std::getenv("ADMIN"));
 
-    if (token == nullptr || adminEnv == nullptr) {
+    if (token.empty() || admin.empty()) {
         LOG_CRITICAL("ENV variable is NULL (TOKEN and/or ADMIN)");
         return 1;
     }
@@ -24,14 +24,12 @@ int main() {
     services.push_back(std::make_shared<Gelbooru>());
     services.push_back(std::make_unique<Kemono>());
     services.push_back(std::make_unique<Pixiv>());
-
-    std::string admin(adminEnv);
-    Bot bot(token, db, services, admin);
     
     signal(SIGINT, [](int s) {
         exit(0);
     });
 
+    Bot bot(token, db, services, admin);
     std::thread botThead([&]() { bot.run(); });
     std::thread parserThread([&]() { bot.parser(); });
 

@@ -44,4 +44,5 @@ class Utils {
         static std::vector<std::uint8_t> sha256(const std::string& input);
         static std::string urlsafe_b64encode(const std::vector<std::uint8_t>& hash);
         static std::string generate_urlsafe_token(std::size_t length);
+        static std::string getMimeType(const std::filesystem::path& path);
 };
