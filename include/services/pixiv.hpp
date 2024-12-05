@@ -15,7 +15,7 @@ class Pixiv : public Service {
         void init() override;
         void refresh() override;
         std::pair<std::string, long> request(const std::string& url) override {
-            cpr::Response r = cpr::Get(cpr::Url{url}, cpr::Bearer{accessToken}, cpr::Header({"Referer", "https://www.pixiv.net/"}));
+            cpr::Response r = cpr::Get(cpr::Url{url}, cpr::Bearer{accessToken}, cpr::Header{{"Referer", "https://www.pixiv.net/"}});
             
             if (r.status_code != 200) {
                 LOG_WARN("Request Error: {} / {}", r.status_code, url);
