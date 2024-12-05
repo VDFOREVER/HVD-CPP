@@ -162,7 +162,7 @@ void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::
         std::filesystem::path url = photo.getPost();
         LOG_INFO("Send: {}", url.string());
 
-        std::string data = Utils::request(url).first;
+        std::string data = service->request(url).first; 
 
         TgBot::InputFile::Ptr file = std::make_shared<TgBot::InputFile>();
         file->data = data;
@@ -178,7 +178,7 @@ void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::
             else
                 bot.getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
         } catch (const std::exception& e) {
-            LOG_WARN("Erroe send: {}", e.what());
+            LOG_WARN("Error send: {}", e.what());
             try {
                 bot.getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
             } catch (const std::exception& e) {
