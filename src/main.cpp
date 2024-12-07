@@ -7,7 +7,8 @@
 std::unique_ptr<Bot> bot;
 
 void signalHandler(int signum) {
-    bot.reset();
+    if (signum != SIGSEGV)
+        bot.reset();
 
     exit(signum);
 }
