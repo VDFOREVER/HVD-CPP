@@ -1,7 +1,7 @@
 #include <bot.hpp>
 
-Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>& services, const std::string& admin) : bot(token), db(db), services(services), admin(admin) {
-    bot.getEvents().onCommand("help", [this, &db](TgBot::Message::Ptr message) {
+Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("data.db"), admin(admin) {
+    bot.getEvents().onCommand("help", [this](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");
             return;
@@ -10,7 +10,7 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
         bot.getApi().sendMessage(message->chat->id, helpMessage);
     });
 
-    bot.getEvents().onCommand("adduser", [this, &db, &services, &admin](TgBot::Message::Ptr message) {
+    bot.getEvents().onCommand("adduser", [this, &admin](TgBot::Message::Ptr message) {
         try {
             if (std::to_string(message->chat->id) != admin) {
                 bot.getApi().sendMessage(message->chat->id, "Not Permission");
@@ -36,7 +36,7 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
         }
     });
 
-    bot.getEvents().onCommand("rmuser", [this, &db, &services, &admin](TgBot::Message::Ptr message) {
+    bot.getEvents().onCommand("rmuser", [this, &admin](TgBot::Message::Ptr message) {
         try {
             if (std::to_string(message->chat->id) != admin) {
                 bot.getApi().sendMessage(message->chat->id, "Not Permission");
@@ -63,7 +63,7 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
     });
 
 
-    bot.getEvents().onCommand("addtag", [this, &db, &services](TgBot::Message::Ptr message) {
+    bot.getEvents().onCommand("addtag", [this](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");
             return;
@@ -85,7 +85,7 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
         bot.getApi().sendMessage(message->chat->id, "add tag");
     });
 
-    bot.getEvents().onCommand("rmtag", [this, &db](TgBot::Message::Ptr message) {
+    bot.getEvents().onCommand("rmtag", [this](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");
             return;
@@ -101,7 +101,7 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
         bot.getApi().sendMessage(message->chat->id, "Rm tag");
     });
 
-    bot.getEvents().onCommand("addantitag", [this, &db](TgBot::Message::Ptr message) {
+    bot.getEvents().onCommand("addantitag", [this](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");
             return;
@@ -117,7 +117,7 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
         bot.getApi().sendMessage(message->chat->id, "add Antitag");
     });
 
-    bot.getEvents().onCommand("rmantitag", [this, &db](TgBot::Message::Ptr message) {
+    bot.getEvents().onCommand("rmantitag", [this](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");
             return;
@@ -133,7 +133,7 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
         bot.getApi().sendMessage(message->chat->id, "Rm Antitag");
     });
 
-    bot.getEvents().onCommand("taglist", [this, &db](TgBot::Message::Ptr message) {
+    bot.getEvents().onCommand("taglist", [this](TgBot::Message::Ptr message) {
         if (!db.userExist(message->chat->id)) {
             bot.getApi().sendMessage(message->chat->id, "Not Fount user");
             return;
@@ -141,6 +141,14 @@ Bot::Bot(const std::string &token, DB& db, std::vector<std::shared_ptr<Service>>
 
         bot.getApi().sendMessage(message->chat->id, db.getFormattedTagsAndAntiTags(message->chat->id));
     });
+
+    botThead = std::thread(&Bot::run, this);
+    parserThread = std::thread(&Bot::parser, this);
+}
+
+Bot::~Bot() {
+    botThead.join();
+    parserThread.join();
 }
 
 void Bot::run() {

@@ -23,3 +23,17 @@ std::vector<PostData> Gelbooru::parse(const std::string& tag) {
 
     return tmp;
 }
+
+std::pair<std::string, long> Gelbooru::request(const std::string& url) {
+    cpr::Response r = cpr::Get(cpr::Url{url}, cpr::Cookie("fringeBenefits", "yup"));
+    
+    if (r.status_code != 200) {
+        LOG_WARN("Request Error: {} / {}", r.status_code, url);
+        return std::make_pair("", r.status_code);
+    }
+
+    if (r.text.empty())
+        LOG_WARN("Request empty: {}", url);
+        
+    return std::make_pair(r.text, r.status_code);
+};

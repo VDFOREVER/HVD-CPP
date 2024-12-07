@@ -8,19 +8,28 @@
 #include <utils.hpp>
 #include <services/service.hpp>
 #include <filesystem>
+#include <memory>
 
 class Bot {
     public:
-        Bot(const std::string& token, DB& db, std::vector<std::shared_ptr<Service>>& services, const std::string& admin);
-        void run();
-        void parser();
+        Bot(const std::string& token, const std::string& admin);
+        ~Bot();
+
+        template<typename T>
+        void addService() {
+            services.push_back(std::make_shared<T>());
+        }
 
     private:
         TgBot::Bot bot;
-        DB& db;
+        DB db;
         std::string admin;
-        std::vector<std::shared_ptr<Service>>& services;
+        std::vector<std::shared_ptr<Service>> services;
+        std::thread botThead;
+        std::thread parserThread;
         void sendContent(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service);
+        void parser();
+        void run();
         const std::string helpMessage =
             "/help\n"
             "/addtag {service} {tag}\n"

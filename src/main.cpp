@@ -1,12 +1,16 @@
 #include <services/kemono.hpp>
 #include <services/rule34.hpp>
 #include <services/gelbooru.hpp>
-#include <services/service.hpp>
 #include <services/pixiv.hpp>
-#include <memory>
-#include <db.hpp>
-#include <thread>
 #include <bot.hpp>
+
+std::unique_ptr<Bot> bot;
+
+void signalHandler(int signum) {
+    bot.reset();
+
+    exit(signum);
+}
 
 int main() {
     std::string token(std::getenv("TOKEN"));
@@ -17,24 +21,15 @@ int main() {
         return 1;
     }
 
-    DB db("data.db");
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
+    signal(SIGSEGV, signalHandler);
 
-    std::vector<std::shared_ptr<Service>> services;
-    services.push_back(std::make_shared<Rule34>());
-    services.push_back(std::make_shared<Gelbooru>());
-    services.push_back(std::make_unique<Kemono>());
-    services.push_back(std::make_unique<Pixiv>());
-    
-    signal(SIGINT, [](int s) {
-        exit(0);
-    });
-
-    Bot bot(token, db, services, admin);
-    std::thread botThead([&]() { bot.run(); });
-    std::thread parserThread([&]() { bot.parser(); });
-
-    botThead.join();
-    parserThread.join();
+    bot = std::make_unique<Bot>(token, admin);
+    bot->addService<Rule34>();
+    bot->addService<Gelbooru>();
+    bot->addService<Kemono>();
+    bot->addService<Pixiv>();
 
     return 0;
 }

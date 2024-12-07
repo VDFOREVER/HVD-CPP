@@ -105,3 +105,17 @@ void Pixiv::UpdateTokens(const std::string& jsons) {
         LOG_ERROR("Type error: {}", e.what());
     }
 }
+
+std::pair<std::string, long> Pixiv::request(const std::string& url) {
+    cpr::Response r = cpr::Get(cpr::Url{url}, cpr::Bearer{accessToken}, cpr::Header{{"Referer", "https://www.pixiv.net/"}});
+    
+    if (r.status_code != 200) {
+        LOG_WARN("Request Error: {} / {}", r.status_code, url);
+        return std::make_pair("", r.status_code);
+    }
+
+    if (r.text.empty())
+        LOG_WARN("Request empty: {}", url);
+        
+    return std::make_pair(r.text, r.status_code);
+};
