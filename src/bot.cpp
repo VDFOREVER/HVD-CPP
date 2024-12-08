@@ -19,7 +19,7 @@ Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("d
 
             std::vector<std::string> args = Utils::split(message->text, ' ');
             if (args.size() < 2) {
-                bot.getApi().sendMessage(message->chat->id, "Erroe: /adduser {id}");
+                bot.getApi().sendMessage(message->chat->id, "Error: /adduser {id}");
                 return;
             }
 
@@ -45,7 +45,7 @@ Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("d
 
             std::vector<std::string> args = Utils::split(message->text, ' ');
             if (args.size() < 2) {
-                bot.getApi().sendMessage(message->chat->id, "Erroe: /rmuser {id}");
+                bot.getApi().sendMessage(message->chat->id, "Error: /rmuser {id}");
                 return;
             }
 
@@ -71,7 +71,7 @@ Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("d
 
         std::vector<std::string> args = Utils::split(message->text, ' ');
         if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Erroe: /addtag {service} {tag}");
+            bot.getApi().sendMessage(message->chat->id, "Error: /addtag {service} {tag}");
             return;
         }
 
@@ -93,7 +93,7 @@ Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("d
 
         std::vector<std::string> args = Utils::split(message->text, ' ');
         if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Erroe: /rmtag {service} {tag}");
+            bot.getApi().sendMessage(message->chat->id, "Error: /rmtag {service} {tag}");
             return;
         }
 
@@ -109,7 +109,7 @@ Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("d
 
         std::vector<std::string> args = Utils::split(message->text, ' ');
         if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Erroe: /addantitag {service} {tag}");
+            bot.getApi().sendMessage(message->chat->id, "Error: /addantitag {service} {tag}");
             return;
         }
 
@@ -125,7 +125,7 @@ Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("d
 
         std::vector<std::string> args = Utils::split(message->text, ' ');
         if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Erroe: /rmantitag {service} {tag}");
+            bot.getApi().sendMessage(message->chat->id, "Error: /rmantitag {service} {tag}");
             return;
         }
 
@@ -186,7 +186,6 @@ void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::
             else
                 bot.getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
         } catch (const std::exception& e) {
-            LOG_WARN("Error send: {}", e.what());
             try {
                 bot.getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
             } catch (const std::exception& e) {
