@@ -20,7 +20,7 @@ class Send {
 
 class PostData {
     public:
-        PostData(std::vector<std::string>& content, std::vector<std::string>& tags, std::string& id, std::string service) : content(content), tags(tags), id(id), service(service) {}
+        PostData(const std::vector<std::string>& content, const std::vector<std::string>& tags, const std::string& id, const std::string service) : content(content), tags(tags), id(id), service(service) {}
         std::vector<std::string> getContent() const { return content; }
         std::vector<std::string> getTags() const { return tags; }
         std::string getID() const { return id; }
@@ -38,7 +38,6 @@ class Service {
         virtual std::vector<PostData> parse(const std::string& tag) = 0;
         virtual std::string getService() = 0;
         virtual std::string getPostURL(const Send& send) = 0;
-        virtual std::string getURL() = 0;
         virtual void init() {};
         virtual void refresh() {};
         virtual std::pair<std::string, long> request(const std::string& url) {
@@ -54,4 +53,7 @@ class Service {
                 
             return std::make_pair(r.text, r.status_code);
         };
+
+    protected:
+        virtual std::string getURL() = 0;
 };

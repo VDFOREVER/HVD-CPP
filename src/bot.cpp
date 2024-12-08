@@ -202,7 +202,7 @@ void Bot::parser() {
         LOG_INFO("Initialization: {}", service->getService());
         service->init();
     }
-
+    
     while (true) {
         for (const auto& service : services) {
             LOG_INFO("Refresh: {}", service->getService());
@@ -229,8 +229,7 @@ void Bot::parser() {
                             if (Utils::contains(newHistory, content) || Utils::contains(history, content))
                                 continue;
 
-                            Send sss(content, post.getID(), tag);
-                            send.emplace_back(sss);
+                            send.emplace_back(content, post.getID(), tag);
                             newHistory.push_back(content);
                         }
                     }
