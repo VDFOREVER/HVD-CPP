@@ -11,7 +11,6 @@
 class Utils {
     public:
         static std::vector<std::string> split(const std::string& str, char delimiter);
-        static std::shared_ptr<Service> findServiceByName(const std::vector<std::shared_ptr<Service>>& services, const std::string& serviceName);
         template <typename T>
         static bool contains(const std::vector<T>& vec, const T& value) {
             return std::find(vec.begin(), vec.end(), value) != vec.end();
@@ -22,7 +21,7 @@ class Utils {
                 if (std::find(v2.begin(), v2.end(), element) != v2.end())
                     return true;
             }
-            return false; 
+            return false;
         }
         static std::vector<std::uint8_t> sha256(const std::string& input);
         static std::string urlsafe_b64encode(const std::vector<std::uint8_t>& hash);

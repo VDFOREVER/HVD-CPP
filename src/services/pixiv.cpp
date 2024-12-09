@@ -1,23 +1,51 @@
 #include <services/pixiv.hpp>
 
-std::vector<PostData> Pixiv::parse(const std::string& tag) {
+Pixiv::Pixiv() : Service("pixiv", "https://app-api.pixiv.net/v1/user/illusts?&type=illust&offset=0&user_id=", "https://www.pixiv.net/en/artworks/") {
+    std::string codeVerifier = Utils::generate_urlsafe_token(32);
+    std::string codeChallenge = Utils::urlsafe_b64encode(Utils::sha256(codeVerifier));
+    LOG_INFO("{}?code_challenge={}&code_challenge_method=S256&client=pixiv-android", LOGIN_URL, codeChallenge);
+
+    std::string code;
+    std::cout << "Input code: ";
+    std::cin >> code;
+
+    std::vector<cpr::Pair> payload = {
+        {"code_verifier", codeVerifier},
+        {"code", code},
+        {"grant_type", "authorization_code"},
+        {"redirect_uri", REDIRECT_URI},
+        {"client_id", CLIENT_ID},
+        {"client_secret", CLIENT_SECRET},
+        {"include_policy", "true"}
+    };
+
+    cpr::Response response = cpr::Post(
+        cpr::Url{AUTH_TOKEN_URL},
+        cpr::Payload{payload.begin(), payload.end()},
+        cpr::Header{{"User-Agent", USER_AGENT}}
+    );
+
+    UpdateTokens(response.text);
+}
+
+post_data_tv Pixiv::parse(const std::string& tag) {
     if (accessToken.empty()) {
         LOG_ERROR("Access token is empty");
         return {};
     }
 
-    std::pair<std::string, long> reqData = request(getURL() + tag);
+    std::pair<std::string, long> reqData = request(url + tag);
 
     if (reqData.second == 400) {
         LOG_WARN("force refresh token");
         refresh();
-        reqData = request(getURL() + tag);
+        reqData = request(url + tag);
     }
 
     if (reqData.first.empty())
          return {};
 
-    std::vector<PostData> tmp;
+    post_data_tv tmp;
     try {
         json data = json::parse(reqData.first);
 
@@ -41,7 +69,7 @@ std::vector<PostData> Pixiv::parse(const std::string& tag) {
                 tagv.push_back(ctag);
             }
 
-            PostData data(content, tagv, id, getService());
+            post_data_t data(content, tagv, id, type);
             tmp.emplace_back(data);
         }
     } catch (const std::exception& e) {
@@ -51,33 +79,6 @@ std::vector<PostData> Pixiv::parse(const std::string& tag) {
     return tmp;
 }
 
-void Pixiv::init() {
-    std::string codeVerifier = Utils::generate_urlsafe_token(32);
-    std::string codeChallenge = Utils::urlsafe_b64encode(Utils::sha256(codeVerifier));
-    LOG_INFO("{}?code_challenge={}&code_challenge_method=S256&client=pixiv-android", LOGIN_URL, codeChallenge);
-
-    std::string code;
-    LOG_INFO("Input code: ")
-    std::cin >> code;
-
-    std::vector<cpr::Pair> payload = {
-        {"code_verifier", codeVerifier},
-        {"code", code},
-        {"grant_type", "authorization_code"},
-        {"redirect_uri", REDIRECT_URI},
-        {"client_id", CLIENT_ID},
-        {"client_secret", CLIENT_SECRET},
-        {"include_policy", "true"}
-    };
-
-    cpr::Response response = cpr::Post(
-        cpr::Url{AUTH_TOKEN_URL},
-        cpr::Payload{payload.begin(), payload.end()},
-        cpr::Header{{"User-Agent", USER_AGENT}}
-    );
-
-    UpdateTokens(response.text);
-}
 void Pixiv::refresh() {
     std::vector<cpr::Pair> payload = {
         {"grant_type", "refresh_token"},
@@ -108,7 +109,7 @@ void Pixiv::UpdateTokens(const std::string& jsons) {
 
 std::pair<std::string, long> Pixiv::request(const std::string& url) {
     cpr::Response r = cpr::Get(cpr::Url{url}, cpr::Bearer{accessToken}, cpr::Header{{"Referer", "https://www.pixiv.net/"}});
-    
+
     if (r.status_code != 200) {
         LOG_WARN("Request Error: {} / {}", r.status_code, url);
         return std::make_pair("", r.status_code);
@@ -116,6 +117,6 @@ std::pair<std::string, long> Pixiv::request(const std::string& url) {
 
     if (r.text.empty())
         LOG_WARN("Request empty: {}", url);
-        
+
     return std::make_pair(r.text, r.status_code);
 };
