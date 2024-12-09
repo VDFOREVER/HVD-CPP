@@ -257,5 +257,7 @@ std::string DB::getFormattedTagsAndAntiTags(std::int64_t user_id) {
         LOG_ERROR("Error fetching tags and anti-tags: {}", e.what());
     }
 
-    return result.str();
+    std::string res = result.str();
+
+    return res.empty() ? "Empty" : res;
 }
