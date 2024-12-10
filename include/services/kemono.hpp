@@ -12,7 +12,7 @@ class Kemono : public Service {
 
         post_data_tv parse(const std::string& tag) override;
 
-        std::string buildPostURL(send_t send) override {
+        std::string buildPostURL(const send_t& send) override {
             std::vector<std::string> tags = Utils::split(send.tag, '/');
             if (tags.size() < 2 || tags.size() > 2) {
                 LOG_WARN("Error split");

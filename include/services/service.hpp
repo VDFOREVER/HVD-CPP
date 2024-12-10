@@ -31,7 +31,7 @@ class Service {
 
         virtual void refresh() {};
         virtual post_data_tv parse(const std::string& tag) = 0;
-        virtual std::string buildPostURL(send_t send) {
+        virtual std::string buildPostURL(const send_t& send) {
             return postUrl + send.id;
         }
         virtual std::pair<std::string, long> request(const std::string& url) {

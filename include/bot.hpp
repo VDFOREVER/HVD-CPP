@@ -68,7 +68,7 @@ class Bot : public TgBot::Bot {
             commands.push_back(std::make_shared<Command>(args...));
         }
 
-        void sendMessage(int64_t id, std::string text) {
+        void sendMessage(int64_t id, const std::string &text) {
             getApi().sendMessage(id, text);
         }
 
@@ -115,7 +115,7 @@ class Bot : public TgBot::Bot {
         std::vector<std::shared_ptr<Service>> services;
         std::vector<std::shared_ptr<Command>> commands;
 
-        void sendContent(send_tv send, std::int64_t user_id, std::shared_ptr<Service> service);
+        void sendContent(const send_tv& send, std::int64_t user_id, std::shared_ptr<Service> service);
         void mainloop();
         void update_services();
 };

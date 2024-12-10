@@ -62,7 +62,7 @@ void Bot::command_handler(TgBot::Message::Ptr message) {
     replyMessage(message, "Unknown command: {}", message->text);
 }
 
-void Bot::sendContent(send_tv send, std::int64_t user_id, std::shared_ptr<Service> service) {
+void Bot::sendContent(const send_tv& send, std::int64_t user_id, std::shared_ptr<Service> service) {
     for (const auto& photo : send) {
         std::filesystem::path url = photo.post;
         LOG_INFO("Send: {}", url.string());
