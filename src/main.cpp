@@ -17,9 +17,8 @@ void signalHandler(int signum) {
 }
 
 int main() {
-    std::string token(std::getenv("TOKEN"));
-
-    if (token.empty()) {
+    const char* token = std::getenv("TOKEN");
+    if (token == NULL) {
         LOG_CRITICAL("ENV variable is NULL (TOKEN)");
         return 1;
     }
