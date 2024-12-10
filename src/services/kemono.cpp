@@ -1,17 +1,19 @@
 #include <services/kemono.hpp>
 
-std::vector<PostData> Kemono::parse(const std::string& tag) {
+Kemono::Kemono() : Service("kemono", "https://kemono.su/api/v1/", "https://kemono.su/") {}
+
+post_data_tv Kemono::parse(const std::string& tag) {
     std::vector<std::string> tags = Utils::split(tag, '/');
     if (tags.size() < 2 || tags.size() > 2) {
         LOG_WARN("Error split");
         return {};
     }
 
-    std::string reqData = request(fmt::format("{}{}/user/{}", getURL(), tags[0], tags[1])).first;
+    std::string reqData = request(fmt::format("{}{}/user/{}", url, tags[0], tags[1])).first;
     if (reqData.empty())
         return {};
 
-    std::vector<PostData> tmp;
+    post_data_tv tmp;
 
     try {
         json data = json::parse(reqData);
@@ -24,7 +26,7 @@ std::vector<PostData> Kemono::parse(const std::string& tag) {
                 std::vector<std::string> content = {file_path};
                 std::vector<std::string> tags = {};
 
-                PostData data(content, tags, id, getService());
+                post_data_t data(content, tags, id, type);
                 tmp.emplace_back(data);
             }
         }

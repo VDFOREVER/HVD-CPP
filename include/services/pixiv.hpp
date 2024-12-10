@@ -8,14 +8,12 @@ using json = nlohmann::json;
 
 class Pixiv : public Service {
     public:
-        std::vector<PostData> parse(const std::string& tag) override;
-        std::string getService() override {return "pixiv";};
-        std::string getPostURL(const Send& send) override {return "https://www.pixiv.net/en/artworks/" + send.getID();};
-        std::string getURL() override {return "https://app-api.pixiv.net/v1/user/illusts?&type=illust&offset=0&user_id=";};
-        void init() override;
+        Pixiv();
+
+        post_data_tv parse(const std::string& tag) override;
         void refresh() override;
         std::pair<std::string, long> request(const std::string& url) override;
-        
+
     private:
         void UpdateTokens(const std::string& jsons);
         std::string accessToken;

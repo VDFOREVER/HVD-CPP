@@ -13,4 +13,4 @@
 #define LOG_WARN(...)       std::cout << YELLOW << "[WARN] " << RESET << fmt::format(__VA_ARGS__) << std::endl;
 #define LOG_ERROR(...)      std::cerr << RED << "[ERROR] " << RESET << fmt::format(__VA_ARGS__) << std::endl;
 #define LOG_CRITICAL(...)   std::cerr << BOLDRED << "[CRITICAL] " << RESET << fmt::format(__VA_ARGS__) << std::endl;
-#define LOG_FATAL(...)   std::cerr << BOLDRED << "[FATAL] " << RESET << fmt::format(__VA_ARGS__) << std::endl;
+#define LOG_FATAL(...)      std::cerr << BOLDRED << "[FATAL] " << RESET << fmt::format(__VA_ARGS__) << std::endl;

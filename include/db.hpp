@@ -15,15 +15,15 @@ class DB {
         void rmTag(const std::string &site_name, const std::string &tag, std::int64_t user_id);
         void rmAntiTag(const std::string &site_name, const std::string &tag, std::int64_t user_id);
         void addHistory(const std::string &site_name, const std::vector<std::string> &data, std::int64_t user_id);
-        bool userExist(std::int64_t user);
-        std::unordered_map<std::string, std::vector<int64_t>> getUsersByTags(const std::string &site_name);        
+        bool isUserTableEmpty();
+        bool userExist(std::int64_t user, bool is_admin = false);
+        std::unordered_map<std::string, std::vector<int64_t>> getUsersByTags(const std::string &site_name);
         std::vector<std::string> getHistory(std::int64_t user_id, const std::string& site_name, const std::string& tag);
         std::vector<std::string> getAntiTagForUserAndSite(std::int64_t user_id, const std::string& site_name);
         std::string getFormattedTagsAndAntiTags(std::int64_t user_id);
-        void addUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services);
-        void rmUser(std::int64_t id, const std::vector<std::shared_ptr<Service>>& services);
+        void addUser(std::int64_t id, bool is_admin = false);
+        void rmUser(std::int64_t id);
 
     private:
         SQLite::Database db;
 };
-
