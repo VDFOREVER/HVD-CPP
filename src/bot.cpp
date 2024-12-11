@@ -1,195 +1,92 @@
 #include <bot.hpp>
 
-Bot::Bot(const std::string &token, const std::string& admin) : bot(token), db("data.db"), admin(admin) {
-    bot.getEvents().onCommand("help", [this](TgBot::Message::Ptr message) {
-        if (!db.userExist(message->chat->id)) {
-            bot.getApi().sendMessage(message->chat->id, "Not Fount user");
-            return;
-        }
-
-        bot.getApi().sendMessage(message->chat->id, helpMessage);
+Bot::Bot(const std::string &token) : TgBot::Bot(token), db("data.db") {
+    getEvents().onUnknownCommand([this](TgBot::Message::Ptr message) {
+        this->command_handler(message);
     });
+}
 
-    bot.getEvents().onCommand("adduser", [this, &admin](TgBot::Message::Ptr message) {
-        try {
-            if (std::to_string(message->chat->id) != admin) {
-                bot.getApi().sendMessage(message->chat->id, "Not Permission");
-                return;
-            }
+void Bot::start() {
+    LOG_INFO("Bot started");
+    is_running = true;
+    mainloop();
+}
 
-            std::vector<std::string> args = Utils::split(message->text, ' ');
-            if (args.size() < 2) {
-                bot.getApi().sendMessage(message->chat->id, "Error: /adduser {id}");
-                return;
-            }
-
-            std::int64_t id = std::stoll(args[1]);
-            if (db.userExist(id)) {
-                bot.getApi().sendMessage(message->chat->id, "Exist user");
-                return;
-            }
-
-            db.addUser(id, services);
-            bot.getApi().sendMessage(message->chat->id, "add user");
-        } catch (const std::exception& e) {
-            bot.getApi().sendMessage(message->chat->id, fmt::format("Error: {}", e.what()));
-        }
-    });
-
-    bot.getEvents().onCommand("rmuser", [this, &admin](TgBot::Message::Ptr message) {
-        try {
-            if (std::to_string(message->chat->id) != admin) {
-                bot.getApi().sendMessage(message->chat->id, "Not Permission");
-                return;
-            }
-
-            std::vector<std::string> args = Utils::split(message->text, ' ');
-            if (args.size() < 2) {
-                bot.getApi().sendMessage(message->chat->id, "Error: /rmuser {id}");
-                return;
-            }
-
-            std::int64_t id = std::stoll(args[1]);
-            if (!db.userExist(id)) {
-                bot.getApi().sendMessage(message->chat->id, "Exist user");
-                return;
-            }
-
-            db.rmUser(id, services);
-            bot.getApi().sendMessage(message->chat->id, "rm user");
-        } catch (const std::exception& e) {
-            bot.getApi().sendMessage(message->chat->id, fmt::format("Error: {}", e.what()));
-        }
-    });
-
-
-    bot.getEvents().onCommand("addtag", [this](TgBot::Message::Ptr message) {
-        if (!db.userExist(message->chat->id)) {
-            bot.getApi().sendMessage(message->chat->id, "Not Fount user");
-            return;
-        }
-
-        std::vector<std::string> args = Utils::split(message->text, ' ');
-        if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Error: /addtag {service} {tag}");
-            return;
-        }
-
-        auto service = Utils::findServiceByName(services, args[1]);
-        if (service == nullptr) {
-            bot.getApi().sendMessage(message->chat->id, "Service not found");
-            return;
-        }
-
-        db.addTag(service, args[2], message->chat->id);
-        bot.getApi().sendMessage(message->chat->id, "add tag");
-    });
-
-    bot.getEvents().onCommand("rmtag", [this](TgBot::Message::Ptr message) {
-        if (!db.userExist(message->chat->id)) {
-            bot.getApi().sendMessage(message->chat->id, "Not Fount user");
-            return;
-        }
-
-        std::vector<std::string> args = Utils::split(message->text, ' ');
-        if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Error: /rmtag {service} {tag}");
-            return;
-        }
-
-        db.rmTag(args[1], args[2], message->chat->id);
-        bot.getApi().sendMessage(message->chat->id, "Rm tag");
-    });
-
-    bot.getEvents().onCommand("addantitag", [this](TgBot::Message::Ptr message) {
-        if (!db.userExist(message->chat->id)) {
-            bot.getApi().sendMessage(message->chat->id, "Not Fount user");
-            return;
-        }
-
-        std::vector<std::string> args = Utils::split(message->text, ' ');
-        if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Error: /addantitag {service} {tag}");
-            return;
-        }
-
-        db.addAntiTag(args[1], args[2], message->chat->id);
-        bot.getApi().sendMessage(message->chat->id, "add Antitag");
-    });
-
-    bot.getEvents().onCommand("rmantitag", [this](TgBot::Message::Ptr message) {
-        if (!db.userExist(message->chat->id)) {
-            bot.getApi().sendMessage(message->chat->id, "Not Fount user");
-            return;
-        }
-
-        std::vector<std::string> args = Utils::split(message->text, ' ');
-        if (args.size() < 3) {
-            bot.getApi().sendMessage(message->chat->id, "Error: /rmantitag {service} {tag}");
-            return;
-        }
-
-        db.rmAntiTag(args[1], args[2], message->chat->id);
-        bot.getApi().sendMessage(message->chat->id, "Rm Antitag");
-    });
-
-    bot.getEvents().onCommand("taglist", [this](TgBot::Message::Ptr message) {
-        if (!db.userExist(message->chat->id)) {
-            bot.getApi().sendMessage(message->chat->id, "Not Fount user");
-            return;
-        }
-
-        bot.getApi().sendMessage(message->chat->id, db.getFormattedTagsAndAntiTags(message->chat->id));
-    });
-
-    botThead = std::thread(&Bot::run, this);
-    parserThread = std::thread(&Bot::parser, this);
+void Bot::stop() {
+    LOG_INFO("Bot stopped");
+    is_running = false;
 }
 
 Bot::~Bot() {
-    botThead.join();
-    parserThread.join();
+    stop();
 }
 
-void Bot::run() {
-    bot.getApi().deleteWebhook();
+void Bot::command_handler(TgBot::Message::Ptr message) {
+    LOG_INFO("Command: {} UserID: {} User: {} {}", message->text, message->chat->id, message->chat->firstName, message->chat->lastName);
 
-    TgBot::TgLongPoll longPoll(bot);
-    while (true) {
-        try {
-            longPoll.start();
-        } catch (const std::exception& e) {
-            LOG_ERROR("Bot: {}", e.what());
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+    if (message->text.empty())
+        return;
+
+    std::vector<std::string> args = Utils::split(message->text, ' ');
+
+    std::string name = args[0].substr(1);
+    args.erase(args.begin());
+
+    for (const auto& command : commands) {
+        if (name == command->name) {
+            if (!db.userExist(message->chat->id, command->only_admin)) {
+                if (!db.isUserTableEmpty()) {
+                    replyMessage(message, "You don't have permission for using this command");
+                    return;
+                }
+
+                replyMessage(message, "Users table is empty, adding you as admin");
+                db.addUser(message->chat->id, true);
+            }
+
+            if (args.size() != command->args.size()) {
+                replyMessage(message, "Wrong number of arguments: expected {} got {}\nUsage: {}", command->args.size(), args.size(), command->get_help());
+                return;
+            }
+
+            try {
+                command->handler(*this, message, args);
+            } catch (const std::exception& e) {
+                replyMessage(message, "CommandError: {}", e.what());
+            }
+
+            return;
         }
     }
+
+    replyMessage(message, "Unknown command: {}", message->text);
 }
 
-void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::shared_ptr<Service> service) {
+void Bot::sendContent(const send_tv& send, std::int64_t user_id, std::shared_ptr<Service> service) {
     for (const auto& photo : send) {
-        std::filesystem::path url = photo.getPost();
+        std::filesystem::path url = photo.post;
         LOG_INFO("Send: {}", url.string());
 
-        std::string data = service->request(url).first; 
+        std::string data = service->request(url).first;
 
         TgBot::InputFile::Ptr file = std::make_shared<TgBot::InputFile>();
         file->data = data;
         file->mimeType = Utils::getMimeType(url);
         file->fileName = url.filename();
 
-        std::string caption = fmt::format("[{}]({})\n[original]({})", service->getService(), service->getPostURL(photo), url.string());
+        std::string caption = fmt::format("[{}]({})\n[original]({})", service->type, service->buildPostURL(photo), url.string());
         static std::string mode = "MarkdownV2";
-        
+
         try {
             if (url.extension() == ".mp4")
-                bot.getApi().sendVideo(user_id, file, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
+                getApi().sendVideo(user_id, file, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
             else
-                bot.getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
+                getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
         } catch (const std::exception& e) {
             try {
-                bot.getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
+                getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
             } catch (const std::exception& e) {
-                bot.getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, mode);
+                getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, mode);
             }
         }
 
@@ -197,52 +94,88 @@ void Bot::sendContent(const std::vector<Send>& send, std::int64_t user_id, std::
     }
 }
 
-void Bot::parser() {
-    for (const auto& service : services) {
-        LOG_INFO("Initialization: {}", service->getService());
-        service->init();
-    }
-    
+void Bot::mainloop() {
+    // Not really good, but also not really bad
+    // Can cause segfaults and some other memory access errors
+    auto update_services_threaded = [this]() {
+        std::thread(&Bot::update_services, this).detach();
+    };
+
+    auto last_update = std::chrono::steady_clock::now();
+    update_services_threaded();
+
+    getApi().deleteWebhook();
+
+    TgBot::TgLongPoll longPoll((TgBot::Bot&)*this);
     while (true) {
-        for (const auto& service : services) {
-            LOG_INFO("Refresh: {}", service->getService());
-            service->refresh();
-
-            auto repeatTags = db.getUsersByTags(service->getService());
-            for (const auto& [tag, users] : repeatTags) {
-                std::vector<PostData> posts = service->parse(tag);
-                if (posts.empty())
-                    continue;
-
-                for (const auto& user: users) {
-                    std::vector<std::string> history = db.getHistory(user, service->getService(), tag);
-                    std::vector<std::string> antitag = db.getAntiTagForUserAndSite(user, service->getService());
-                    std::vector<Send> send;
-                    std::vector<std::string> newHistory;
-
-                    for (const auto& post: posts) {
-                        auto tags = post.getTags();
-                        if (Utils::contains(antitag, tags))
-                            continue;
-
-                        for (const auto& content : post.getContent()) {
-                            if (Utils::contains(newHistory, content) || Utils::contains(history, content))
-                                continue;
-
-                            send.emplace_back(content, post.getID(), tag);
-                            newHistory.push_back(content);
-                        }
-                    }
-
-                    sendContent(send, user, service);
-                    db.addHistory(service->getService(), newHistory, user);
-                }
-
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-            }
+        try {
+            longPoll.start();
+        } catch (const std::exception& e) {
+            LOG_ERROR("Bot: {}", e.what());
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
 
-        LOG_INFO("Sleep 2h");
-        std::this_thread::sleep_for(std::chrono::hours(2));
+        auto now = std::chrono::steady_clock::now();
+        auto diff = std::chrono::duration_cast<std::chrono::hours>(now - last_update).count();
+        if (diff >= 2) {
+            LOG_INFO("Last sleep took {}s", diff);
+            update_services_threaded();
+            last_update = now;
+            LOG_INFO("Sleep 2h");
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::yield();
     }
+}
+
+void Bot::update_services() {
+    for (const auto& service : services) {
+        LOG_INFO("Refresh: {}", service->type);
+        service->refresh();
+
+        auto repeatTags = db.getUsersByTags(service->type);
+        for (const auto& [tag, users] : repeatTags) {
+            post_data_tv posts = service->parse(tag);
+            if (posts.empty())
+                continue;
+
+            for (const auto& user: users) {
+                std::vector<std::string> history = db.getHistory(user, service->type, tag);
+                std::vector<std::string> antitag = db.getAntiTagForUserAndSite(user, service->type);
+                send_tv send;
+                std::vector<std::string> newHistory;
+
+                for (const auto& post: posts) {
+                    auto tags = post.tags;
+                    if (Utils::contains(antitag, tags))
+                        continue;
+
+                    for (const auto& content : post.content) {
+                        if (Utils::contains(newHistory, content) || Utils::contains(history, content))
+                            continue;
+
+                        send.emplace_back(content, post.id, tag);
+                        newHistory.push_back(content);
+                    }
+                }
+
+                sendContent(send, user, service);
+                db.addHistory(service->type, newHistory, user);
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+
+    LOG_INFO("Refreshing complete");
+}
+
+std::shared_ptr<Service> Bot::findServiceByName(const std::string& name) {
+    for (const auto& service : services) {
+        if (service->type == name)
+            return service;
+    }
+
+    return nullptr;
 }

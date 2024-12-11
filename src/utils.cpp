@@ -12,16 +12,6 @@ std::vector<std::string> Utils::split(const std::string& str, char delimiter) {
     return tokens;
 }
 
-std::shared_ptr<Service> Utils::findServiceByName(const std::vector<std::shared_ptr<Service>>& services, const std::string& serviceName) {
-    for (const auto& service : services) {
-        if (service->getService() == serviceName) {
-            return service;
-        }
-    }
-
-    return nullptr;
-}
-
 std::vector<uint8_t> Utils::sha256(const std::string& input) {
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     if (!ctx) {
