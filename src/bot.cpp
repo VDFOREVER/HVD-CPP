@@ -118,7 +118,6 @@ void Bot::mainloop() {
         auto now = std::chrono::steady_clock::now();
         auto diff = std::chrono::duration_cast<std::chrono::hours>(now - last_update).count();
         if (diff >= 2) {
-            LOG_INFO("Last sleep took {}s", diff);
             update_services_threaded();
             last_update = now;
             LOG_INFO("Sleep 2h");
