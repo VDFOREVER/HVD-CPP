@@ -18,8 +18,8 @@ post_data_tv Rule34::parse(const std::string& tag) {
         std::vector<std::string> file_url = { post.attribute("file_url").as_string() };
         std::vector<std::string> tags = Utils::split(post.attribute("tags").as_string(), ' ');
         std::string id = post.attribute("id").as_string();
-        post_data_t data(file_url, tags, id, type);
-        tmp.emplace_back(data);
+        int score = post.attribute("score").as_int();
+        tmp.emplace_back(file_url, tags, id, type, score);
     }
 
     return tmp;
