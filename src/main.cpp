@@ -37,6 +37,7 @@ int main() {
     bot->addCommand("addantitag", std::vector<std::string>{ "service", "tag" }, false, cmd_addantitag);
     bot->addCommand("delantitag", std::vector<std::string>{ "service", "tag" }, false, cmd_delantitag);
     bot->addCommand("taglist", std::vector<std::string>{}, false, cmd_taglist);
+    bot->addCommand("scorelimit", std::vector<std::string>{ "service", "score" }, false, cmd_scorelimit);
 
     bot->addService<Rule34>();
     bot->addService<Gelbooru>();

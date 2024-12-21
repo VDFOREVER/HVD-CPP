@@ -12,3 +12,4 @@ BOT_CMD(deltag);
 BOT_CMD(addantitag);
 BOT_CMD(delantitag);
 BOT_CMD(taglist);
+BOT_CMD(scorelimit);

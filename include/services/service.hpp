@@ -16,6 +16,7 @@ typedef struct {
     std::vector<std::string> tags;
     std::string id;
     std::string service;
+    int score;
 } post_data_t;
 
 typedef std::vector<post_data_t>   post_data_tv;

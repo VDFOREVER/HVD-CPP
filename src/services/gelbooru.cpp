@@ -18,9 +18,9 @@ post_data_tv Gelbooru::parse(const std::string& tag) {
         std::vector<std::string> file_url = { post.child("file_url").text().as_string() };
         std::vector<std::string> tags = Utils::split(post.child("tags").text().as_string(), ' ');
         std::string id = post.child("id").text().as_string();
+        int score = post.child("score").text().as_int();
 
-        post_data_t data(file_url, tags, id, type);
-        tmp.emplace_back(data);
+        tmp.emplace_back(file_url, tags, id, type, score);
     }
 
     return tmp;
