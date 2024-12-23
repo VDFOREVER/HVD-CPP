@@ -146,8 +146,7 @@ void Bot::update_services() {
                 std::vector<std::string> newHistory;
 
                 for (const auto& post: posts) {
-                    auto tags = post.tags;
-                    if (Utils::contains(antitag, tags))
+                    if (Utils::contains(antitag, post.tags) || ((db.getScore(service, user) < post.score) && db.getScore(service, user) != 0))
                         continue;
 
                     for (const auto& content : post.content) {

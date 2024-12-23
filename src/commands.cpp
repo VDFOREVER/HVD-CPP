@@ -68,3 +68,18 @@ BOT_CMD(delantitag) {
 BOT_CMD(taglist) {
     bot.replyMessage(message, bot.getDB().getFormattedTagsAndAntiTags(message->chat->id));
 }
+
+BOT_CMD(scorelimit) {
+    auto service = bot.findServiceByName(args[0]);
+    if (service == nullptr) {
+        bot.replyMessage(message, "Service `{}` not found", args[0]);
+        return;
+    }
+
+    try {
+        int score = std::stoi(args[1]);
+        bot.getDB().scoreUpdate(service, message->chat->id, score);
+    } catch (const std::exception& e) {
+        LOG_ERROR("{}", e.what());
+    }
+}
