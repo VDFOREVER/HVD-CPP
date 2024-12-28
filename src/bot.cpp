@@ -141,13 +141,11 @@ void Bot::update_services() {
 
                 for (const auto& post: posts) {
                     auto tags = post.tags;
-                    if (Utils::contains(antitag, tags) || Utils::contains(history, post.id))
+                    if (Utils::contains(antitag, tags) || Utils::contains(history, post.id) ||
+                        (post.score < db.getScore(service, user)) && db.getScore(service, user) != 0)
                         continue;
 
                     for (const auto& content : post.content) {
-                        if ((db.getScore(service, user) < post.score) && db.getScore(service, user) != 0)
-                            continue; 
-
                         send_t tmp;
                         tmp.content = content;
                         tmp.id = post.id;
