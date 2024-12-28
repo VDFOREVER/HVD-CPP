@@ -115,7 +115,7 @@ class Bot : public TgBot::Bot {
         std::vector<std::shared_ptr<Service>> services;
         std::vector<std::shared_ptr<Command>> commands;
 
-        void sendContent(const send_tv& send, std::int64_t user_id, std::shared_ptr<Service> service);
+        void sendContent(const send_t& send, std::int64_t user_id, std::shared_ptr<Service> service);
         void mainloop();
         void update_services();
 };

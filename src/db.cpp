@@ -45,13 +45,8 @@ void DB::addTag(std::shared_ptr<Service> service, const std::string &tag, std::i
     try {
         std::string site = service->type;
 
-        std::vector<std::string> posts;
-        for (const auto& post : service->parse(tag)) {
-            auto content = post.content;
-            std::copy(content.begin(), content.end(), std::back_inserter(posts));
-        }
-
-        addHistory(site, posts, user_id);
+        for (const auto& post : service->parse(tag))
+            addHistory(site, post.id, user_id);
 
         SQLite::Statement query(db, "INSERT OR IGNORE INTO tags (user_id, site, tag) VALUES (?, ?, ?);");
         query.bind(1, user_id);
@@ -100,20 +95,18 @@ void DB::rmAntiTag(const std::string &site, const std::string &tag, std::int64_t
     }
 }
 
-void DB::addHistory(const std::string &site, const std::vector<std::string> &data, std::int64_t user_id) {
-    for (const auto& history: data) {
-        try {
-            if (history.empty())
-                return;
+void DB::addHistory(const std::string &site, const std::string &data, std::int64_t user_id) {
+    if (data.empty())
+        return;
 
-            SQLite::Statement query(db, "INSERT OR IGNORE INTO history (history, user_id, site) VALUES (?, ?, ?);");
-            query.bind(1, history);
-            query.bind(2, user_id);
-            query.bind(3, site);
-            query.exec();
-        } catch (const std::exception& e) {
-            LOG_ERROR("Error adding history: {}", e.what());
-        }
+    try {
+        SQLite::Statement query(db, "INSERT OR IGNORE INTO history (history, user_id, site) VALUES (?, ?, ?);");
+        query.bind(1, data);
+        query.bind(2, user_id);
+        query.bind(3, site);
+        query.exec();
+    } catch (const std::exception& e) {
+        LOG_ERROR("Error adding history: {}", e.what());
     }
 }
 

@@ -62,35 +62,31 @@ void Bot::command_handler(TgBot::Message::Ptr message) {
     replyMessage(message, "Unknown command: {}", message->text);
 }
 
-void Bot::sendContent(const send_tv& send, std::int64_t user_id, std::shared_ptr<Service> service) {
-    for (const auto& photo : send) {
-        std::filesystem::path url = photo.post;
-        LOG_INFO("Send: {}", url.string());
+void Bot::sendContent(const send_t& send, std::int64_t user_id, std::shared_ptr<Service> service) {
+    std::filesystem::path url = send.content;
+    LOG_INFO("Send: {}", url.string());
 
-        std::string data = service->request(url).first;
+    std::string data = service->request(url).first;
 
-        TgBot::InputFile::Ptr file = std::make_shared<TgBot::InputFile>();
-        file->data = data;
-        file->mimeType = Utils::getMimeType(url);
-        file->fileName = url.filename();
+    TgBot::InputFile::Ptr file = std::make_shared<TgBot::InputFile>();
+    file->data = data;
+    file->mimeType = Utils::getMimeType(url);
+    file->fileName = url.filename();
 
-        std::string caption = fmt::format("[{}]({})\n[original]({})", service->type, service->buildPostURL(photo), url.string());
-        static std::string mode = "MarkdownV2";
+    std::string caption = fmt::format("[{}]({})\n[original]({})", service->type, service->buildPostURL(send), url.string());
+    static std::string mode = "MarkdownV2";
 
+    try {
+        if (url.extension() == ".mp4")
+            getApi().sendVideo(user_id, file, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
+        else
+            getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
+    } catch (const std::exception& e) {
         try {
-            if (url.extension() == ".mp4")
-                getApi().sendVideo(user_id, file, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
-            else
-                getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
+            getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
         } catch (const std::exception& e) {
-            try {
-                getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
-            } catch (const std::exception& e) {
-                getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, mode);
-            }
+            getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, mode);
         }
-
-        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
 
@@ -142,25 +138,25 @@ void Bot::update_services() {
             for (const auto& user: users) {
                 std::vector<std::string> history = db.getHistory(user, service->type, tag);
                 std::vector<std::string> antitag = db.getAntiTagForUserAndSite(user, service->type);
-                send_tv send;
-                std::vector<std::string> newHistory;
 
                 for (const auto& post: posts) {
                     auto tags = post.tags;
-                    if (Utils::contains(antitag, tags))
+                    if (Utils::contains(antitag, tags) || Utils::contains(history, post.id))
                         continue;
 
                     for (const auto& content : post.content) {
-                        if (Utils::contains(newHistory, content) || Utils::contains(history, content))
-                            continue;
+                        send_t tmp;
+                        tmp.content = content;
+                        tmp.id = post.id;
+                        tmp.tag = tag;
 
-                        send.emplace_back(content, post.id, tag);
-                        newHistory.push_back(content);
+                        sendContent(tmp, user, service);
                     }
+
+                    db.addHistory(service->type, post.id, user);
                 }
 
-                sendContent(send, user, service);
-                db.addHistory(service->type, newHistory, user);
+                std::this_thread::sleep_for(std::chrono::seconds(5));
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
