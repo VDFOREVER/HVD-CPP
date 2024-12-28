@@ -23,6 +23,8 @@ class DB {
         std::string getFormattedTagsAndAntiTags(std::int64_t user_id);
         void addUser(std::int64_t id, bool is_admin = false);
         void rmUser(std::int64_t id);
+        void scoreUpdate(std::shared_ptr<Service> service, std::int64_t user_id, std::int64_t score);
+        std::int64_t getScore(std::shared_ptr<Service> service, std::int64_t user_id);
 
     private:
         SQLite::Database db;

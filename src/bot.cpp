@@ -145,6 +145,9 @@ void Bot::update_services() {
                         continue;
 
                     for (const auto& content : post.content) {
+                        if ((db.getScore(service, user) < post.score) && db.getScore(service, user) != 0)
+                            continue; 
+
                         send_t tmp;
                         tmp.content = content;
                         tmp.id = post.id;

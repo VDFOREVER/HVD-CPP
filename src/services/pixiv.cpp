@@ -69,8 +69,9 @@ post_data_tv Pixiv::parse(const std::string& tag) {
                 tagv.push_back(ctag);
             }
 
-            post_data_t data(content, tagv, id, type);
-            tmp.emplace_back(data);
+            int score = illusts.at("total_bookmarks").get<int>();
+
+            tmp.emplace_back(content, tagv, id, type, score);
         }
     } catch (const std::exception& e) {
         LOG_ERROR("Type error: {}", e.what());

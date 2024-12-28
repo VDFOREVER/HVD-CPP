@@ -3,9 +3,10 @@
 DB::DB(std::string name) : db(name, SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE) {
     try {
         db.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, is_admin BOOL);");
-        db.exec("CREATE TABLE IF NOT EXISTS tags (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site TEXT, tag TEXT, UNIQUE(user_id, site, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
-        db.exec("CREATE TABLE IF NOT EXISTS anti_tags (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site TEXT, tag TEXT, UNIQUE(user_id, site, tag), FOREIGN KEY (user_id) REFERENCES User(id));");
-        db.exec("CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site TEXT, history TEXT, UNIQUE(user_id, site, history), FOREIGN KEY (user_id) REFERENCES User(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS tags (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site TEXT, tag TEXT, UNIQUE(user_id, site, tag), FOREIGN KEY (user_id) REFERENCES users(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS anti_tags (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site TEXT, tag TEXT, UNIQUE(user_id, site, tag), FOREIGN KEY (user_id) REFERENCES users(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site TEXT, history TEXT, UNIQUE(user_id, site, history), FOREIGN KEY (user_id) REFERENCES users(id));");
+        db.exec("CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, site TEXT, score INTEGER, UNIQUE(user_id, site, score), FOREIGN KEY (user_id) REFERENCES users(id));");
     } catch (const std::exception& e) {
         LOG_ERROR("{}", e.what());
     }
@@ -253,4 +254,45 @@ std::string DB::getFormattedTagsAndAntiTags(std::int64_t user_id) {
     std::string res = result.str();
 
     return res.empty() ? "Empty" : res;
+}
+
+void DB::scoreUpdate(std::shared_ptr<Service> service, std::int64_t user_id, std::int64_t score) {
+    try {
+        std::string site = service->type;
+        
+        SQLite::Statement query(db, "INSERT OR REPLACE INTO settings (user_id, site, score) VALUES (?, ?, ?);");
+        
+        query.bind(1, user_id);
+        query.bind(2, site);
+        query.bind(3, score);
+        query.exec();
+        
+    } catch (const std::exception& e) {
+        LOG_ERROR("{}", e.what());
+    }
+}
+
+std::int64_t DB::getScore(std::shared_ptr<Service> service, std::int64_t user_id) {
+    try {
+        std::string site = service->type;
+        
+        SQLite::Statement query(db, "SELECT score FROM settings WHERE user_id = ? AND site = ?;");
+        
+        query.bind(1, user_id);
+        query.bind(2, site);
+        
+        if (query.executeStep())
+            return query.getColumn(0).getInt64();
+        
+        SQLite::Statement insert(db, 
+            "INSERT INTO settings (user_id, site, score) "
+            "VALUES (?, ?, 0);");
+        insert.bind(1, user_id);
+        insert.bind(2, site);
+        insert.exec();
+    } catch (const std::exception& e) {
+        LOG_ERROR("{}", e.what());
+    }
+
+    return 0;
 }

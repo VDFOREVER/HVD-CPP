@@ -25,9 +25,9 @@ post_data_tv Kemono::parse(const std::string& tag) {
                 std::string file_path = BASE_URL + attachment.at("path").get<std::string>();
                 std::vector<std::string> content = {file_path};
                 std::vector<std::string> tags = {};
+                int score = 0;
 
-                post_data_t data(content, tags, id, type);
-                tmp.emplace_back(data);
+                tmp.emplace_back(content, tags, id, type, score);
             }
         }
     } catch (const std::exception& e) {
