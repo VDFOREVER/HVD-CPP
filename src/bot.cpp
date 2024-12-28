@@ -136,7 +136,7 @@ void Bot::update_services() {
                 continue;
 
             for (const auto& user: users) {
-                std::vector<std::string> history = db.getHistory(user, service->type, tag);
+                std::vector<std::string> history = db.getHistory(user, service->type);
                 std::vector<std::string> antitag = db.getAntiTagForUserAndSite(user, service->type);
 
                 for (const auto& post: posts) {

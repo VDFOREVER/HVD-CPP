@@ -18,7 +18,7 @@ class DB {
         bool isUserTableEmpty();
         bool userExist(std::int64_t user, bool is_admin = false);
         std::unordered_map<std::string, std::vector<int64_t>> getUsersByTags(const std::string &site_name);
-        std::vector<std::string> getHistory(std::int64_t user_id, const std::string& site_name, const std::string& tag);
+        std::vector<std::string> getHistory(std::int64_t user_id, const std::string& site_name);
         std::vector<std::string> getAntiTagForUserAndSite(std::int64_t user_id, const std::string& site_name);
         std::string getFormattedTagsAndAntiTags(std::int64_t user_id);
         void addUser(std::int64_t id, bool is_admin = false);

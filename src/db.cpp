@@ -160,7 +160,7 @@ std::unordered_map<std::string, std::vector<std::int64_t>> DB::getUsersByTags(co
     return tagToUsers;
 }
 
-std::vector<std::string> DB::getHistory(std::int64_t user_id, const std::string& site, const std::string& tag) {
+std::vector<std::string> DB::getHistory(std::int64_t user_id, const std::string& site) {
     std::vector<std::string> history_entries;
 
     try {
