@@ -1,8 +1,17 @@
 #include <bot.hpp>
 
-Bot::Bot(const std::string &token) : TgBot::Bot(token), db("data.db") {
+Bot::Bot(const std::string &token) : TgBot::Bot(token), db("data.db"), keyboard(std::make_shared<TgBot::InlineKeyboardMarkup>()) {
     getEvents().onUnknownCommand([this](TgBot::Message::Ptr message) {
         this->command_handler(message);
+    });
+
+    getEvents().onCallbackQuery([this](TgBot::CallbackQuery::Ptr query) {
+        if (StringTools::startsWith(query->data, "like")) 
+            getApi().sendMessage(query->message->chat->id, "like");
+        else if (StringTools::startsWith(query->data, "dislike"))
+            getApi().sendMessage(query->message->chat->id, "dislike");
+        else if (StringTools::startsWith(query->data, "similar"))
+            getApi().sendMessage(query->message->chat->id, "similar");
     });
 }
 
@@ -62,6 +71,15 @@ void Bot::command_handler(TgBot::Message::Ptr message) {
     replyMessage(message, "Unknown command: {}", message->text);
 }
 
+TgBot::InlineKeyboardButton::Ptr Bot::addButton(const std::string text, const std::string callback, std::vector<TgBot::InlineKeyboardButton::Ptr>& vec) {
+    TgBot::InlineKeyboardButton::Ptr checkButton = std::make_shared<TgBot::InlineKeyboardButton>();
+    checkButton->text = text;
+    checkButton->callbackData = callback;
+    vec.push_back(checkButton);
+
+    return checkButton;
+}
+
 void Bot::sendContent(const send_t& send, std::int64_t user_id, std::shared_ptr<Service> service) {
     std::filesystem::path url = send.content;
     LOG_INFO("Send: {}", url.string());
@@ -73,21 +91,32 @@ void Bot::sendContent(const send_t& send, std::int64_t user_id, std::shared_ptr<
     file->mimeType = Utils::getMimeType(url);
     file->fileName = url.filename();
 
+    std::vector<TgBot::InlineKeyboardButton::Ptr> row0;
+    addButton("👍", "like", row0);
+    addButton("👎", "dislike", row0);
+    keyboard->inlineKeyboard.push_back(row0);
+
+    std::vector<TgBot::InlineKeyboardButton::Ptr> row1;
+    addButton("Similar", "similar", row1);
+    keyboard->inlineKeyboard.push_back(row1);
+
     std::string caption = fmt::format("[{}]({})\n[original]({})", service->type, service->buildPostURL(send), url.string());
     static std::string mode = "MarkdownV2";
 
     try {
         if (url.extension() == ".mp4")
-            getApi().sendVideo(user_id, file, false, 0, 0, 0, "", caption, nullptr, nullptr, mode);
+            getApi().sendVideo(user_id, file, false, 0, 0, 0, "", caption, nullptr, keyboard, mode);
         else
-            getApi().sendPhoto(user_id, file, caption, nullptr, nullptr, mode);
+            getApi().sendPhoto(user_id, file, caption, nullptr, keyboard, mode);
     } catch (const std::exception& e) {
         try {
-            getApi().sendDocument(user_id, file, "", caption, nullptr, nullptr, mode);
+            getApi().sendDocument(user_id, file, "", caption, nullptr, keyboard, mode);
         } catch (const std::exception& e) {
-            getApi().sendMessage(user_id, caption, nullptr, nullptr, nullptr, mode);
+            getApi().sendMessage(user_id, caption, nullptr, nullptr, keyboard, mode);
         }
     }
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 void Bot::mainloop() {

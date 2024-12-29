@@ -115,6 +115,9 @@ class Bot : public TgBot::Bot {
         std::vector<std::shared_ptr<Service>> services;
         std::vector<std::shared_ptr<Command>> commands;
 
+        TgBot::InlineKeyboardMarkup::Ptr keyboard;
+
+        TgBot::InlineKeyboardButton::Ptr addButton(const std::string text, const std::string callback, std::vector<TgBot::InlineKeyboardButton::Ptr>& vec);
         void sendContent(const send_t& send, std::int64_t user_id, std::shared_ptr<Service> service);
         void mainloop();
         void update_services();
