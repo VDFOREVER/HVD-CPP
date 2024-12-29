@@ -6,7 +6,7 @@
 #include <cpr/cpr.h>
 
 typedef struct {
-    std::string post;
+    std::string content;
     std::string id;
     std::string tag;
 } send_t;
@@ -20,7 +20,6 @@ typedef struct {
 } post_data_t;
 
 typedef std::vector<post_data_t>   post_data_tv;
-typedef std::vector<send_t>        send_tv;
 
 class Service {
     public:
